@@ -1,0 +1,36 @@
+// src/assets/styles/_themes.scss
+
+@import 'variables';
+
+[data-theme="light"] {
+  --primary-color: #{$primary-color-light};
+  --secondary-color: #{$secondary-color-light};
+  --background-color: #{$background-color-light};
+  --text-color: #000000;
+}
+
+[data-theme="dark"] {
+  --primary-color: #{$primary-color-dark};
+  --secondary-color: #{$secondary-color-dark};
+  --background-color: #{$background-color-dark};
+  --text-color: #ffffff;
+}
+
+// 自动匹配系统主题
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --primary-color: #{$primary-color-dark};
+    --secondary-color: #{$secondary-color-dark};
+    --background-color: #{$background-color-dark};
+    --text-color: #ffffff;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] {
+    --primary-color: #{$primary-color-light};
+    --secondary-color: #{$secondary-color-light};
+    --background-color: #{$background-color-light};
+    --text-color: #000000;
+  }
+}
