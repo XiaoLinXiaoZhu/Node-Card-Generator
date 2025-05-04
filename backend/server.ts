@@ -80,17 +80,40 @@ serverAPIs.push(
   })
 );
 
-serverAPIs.push(
-  new ServerAPI("/file/:filename", async (req) => {
-    const file = Bun.file(FILE_PATH);
-    console.log("读取文件", file, file.type);
-    return new Response(file);
-  }, async (req) => {
-    const body = await req.text();
-    await Bun.write(FILE_PATH, body);
-    return new Response("文件保存成功");
-  })
+const fileAPI = new ServerAPI("/file/:fileName", async (req) => {
+  const fileName = fileAPI.GetVariables(req).fileName;
+  let filePath = FILE_PATH;
+  if (!fileName) {
+    filePath = FILE_ROOT + "/example.txt";
+  }
+  else {
+    filePath = FILE_ROOT + "/" + fileName;
+  }
+
+  console.log("读取文件", fileName);
+  const file = Bun.file(filePath);
+  if (!file) {
+    return new Response("文件不存在", { status: 404 });
+  }
+  const fileContent = await file.text();
+  console.log("文件内容", typeof fileContent, fileContent.length);
+  return new Response(fileContent);
+}, async (req) => {
+  const body = await req.text();
+  const fileName = fileAPI.GetVariables(req).fileName;
+  let filePath = FILE_PATH;
+  if (!fileName) {
+    filePath = FILE_ROOT + "/example.txt";
+  }
+  else {
+    filePath = FILE_ROOT + "/" + fileName;
+  }
+  console.log("保存文件", filePath, body);
+  await Bun.write(FILE_PATH, body);
+  return new Response("文件保存成功");
+}
 );
+serverAPIs.push(fileAPI);
 
 const imgAPI = new ServerAPI("/image/:folder/:filename", async (req) => {
   const url = new URL(req.url);

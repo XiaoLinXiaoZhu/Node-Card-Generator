@@ -19,3 +19,6 @@ import "./nodes/ArrayGet";
 import "./nodes/CSVParser";
 import "./nodes/GetNumber";
 import "./nodes/CSVReader";
+import "./nodes/CSVReaderFromBackend";
+import "./nodes/Array2Enum";
+import "./nodes/FormatString";

@@ -6,7 +6,7 @@ class ArrayGet extends LGraphNode {
         super("Array Get");
         this.addInput("Array", "array");
         this.addInput("Index", "number");
-        this.addOutput("Value", "any");
+        this.addOutput("Value", "string");
         this.properties = { index: 0 };
         this.onExecute = this.onExecute.bind(this);
     }
@@ -14,7 +14,7 @@ class ArrayGet extends LGraphNode {
         const array = this.getInputData(0);
         const index = this.getInputData(1);
         if (array && index !== undefined) {
-            this.setOutputData(0, array[index]);
+            this.setOutputData(0, array[index] as string);
         } else {
             this.setOutputData(0, null); // 如果没有输入数据，设置输出为 null
         }
