@@ -14,4 +14,13 @@ export default defineConfig({
       'router': path.resolve(__dirname, 'src/router')
     }
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001', // 后端服务器地址
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
 })

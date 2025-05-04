@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomePage from "../pages/HomePage.vue";
 import NodeEditor from "../pages/NodeEditor.vue";
+import FileEditor from "../pages/FileEditor.vue";
 
 export default createRouter({
   history: createWebHistory("/"),
@@ -14,6 +15,11 @@ export default createRouter({
       path: "/node-editor",
       name: "NodeEditor",
       component: NodeEditor,
+    },
+    {
+      path: "/file-editor",
+      name: "FileEditor",
+      component: FileEditor,
     }
   ],
 });

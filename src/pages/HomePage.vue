@@ -4,6 +4,7 @@
         <p>这是一个基于 Vue 3 和 TypeScript 的 LiteGraph.js 编辑器，用于快速组织节点以绘制卡面。</p>
         <p>请点击下面的按钮开始编辑：</p>
         <router-link to="/node-editor" class="start-button">开始编辑</router-link>
+        <router-link to="/file-editor" class="start-button">文件编辑器</router-link>
     </div>
 </template>
 
