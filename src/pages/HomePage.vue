@@ -33,14 +33,15 @@
 
     .start-button {
         padding: 0.5rem 1rem;
-        background-color: #61dafb;
-        color: #282c34;
+        background-color: var(--primary-color);
+        color: var(--text-color);
         text-decoration: none;
         border-radius: 5px;
         font-size: 1.2rem;
+        transition: background-color 0.2s ease;
 
         &:hover {
-            background-color: #21a1f1;
+            background-color: var(--primary-color-hover);
         }
     }
 }

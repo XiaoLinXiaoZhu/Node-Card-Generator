@@ -57,10 +57,10 @@ button {
   background-color: var(--primary-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s ease-in-out, background-color 0.5s ease-in-out;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--primary-color-hover);
 }
 button:focus,
 button:focus-visible {

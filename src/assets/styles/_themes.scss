@@ -4,6 +4,7 @@
 
 [data-theme="light"] {
   --primary-color: #{$primary-color-light};
+  --primary-color-hover: #{$primary-color-light-hover};
   --secondary-color: #{$secondary-color-light};
   --background-color: #{$background-color-light};
   --text-color: #000000;
@@ -11,6 +12,7 @@
 
 [data-theme="dark"] {
   --primary-color: #{$primary-color-dark};
+  --primary-color-hover: #{$primary-color-dark-hover};
   --secondary-color: #{$secondary-color-dark};
   --background-color: #{$background-color-dark};
   --text-color: #ffffff;
@@ -20,6 +22,7 @@
 @media (prefers-color-scheme: dark) {
   [data-theme="auto"] {
     --primary-color: #{$primary-color-dark};
+    --primary-color-hover: #{$primary-color-dark-hover};
     --secondary-color: #{$secondary-color-dark};
     --background-color: #{$background-color-dark};
     --text-color: #ffffff;
@@ -29,6 +32,7 @@
 @media (prefers-color-scheme: light) {
   [data-theme="auto"] {
     --primary-color: #{$primary-color-light};
+    --primary-color-hover: #{$primary-color-light-hover};
     --secondary-color: #{$secondary-color-light};
     --background-color: #{$background-color-light};
     --text-color: #000000;

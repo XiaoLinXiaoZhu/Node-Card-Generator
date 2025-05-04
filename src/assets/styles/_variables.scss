@@ -1,15 +1,17 @@
 // src/assets/styles/_variables.scss
 
-// 主题颜色
+// 亮色主题
 $primary-color-light: #3498db;
-$primary-color-dark: #1e3a8a;
-
 $secondary-color-light: #2ecc71;
-$secondary-color-dark: #e6ff57;
-
-// 背景色
 $background-color-light: #ffffff;
+$primary-color-light-hover: #6d98b5; // hover颜色
+
+// 深色主题
+$primary-color-dark: #1e3a8a;
+$secondary-color-dark: #e6ff57;
 $background-color-dark: #121212;
+$primary-color-dark-hover: #5b70aa; // hover颜色
+
 
 // 字体设置
 $h1-size: 2em;
