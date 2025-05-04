@@ -6,8 +6,6 @@
 //   this.addOutput("A+B","number");
 //   this.properties = { precision: 1 };
 // }
-
-import { type IWidget,type WidgetCallback } from "litegraph.js";
 //@ts-ignore
 import path from "path";
 //@ts-ignore

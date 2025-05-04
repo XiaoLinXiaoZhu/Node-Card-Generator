@@ -1,3 +1,28 @@
+<template>
+    <div data-theme="dark" class="file-editor">
+        <h1>文件编辑器</h1>
+        <div>
+            <div class="horizontalButtons">
+                <button @click="loadFile">加载文件</button>
+                <button @click="saveFile">保存文件</button>
+            </div>
+            <textarea v-model="fileContent" rows="10" cols="50"></textarea>
+            <p>当前文件: {{ fileName }}</p>
+        </div>
+        <div>
+            <div class="horizontalButtons">
+                <button @click="loadImage">加载图片</button>
+                <button @click="randomDraw">随机绘制</button>
+                <button @click="saveImage">保存图片</button>
+            </div>
+            <canvas id="mycanvas" width="500" height="500"></canvas>
+            <img id="myimg" src="" alt="Loaded Image"/>
+            <p>当前图片: example.png</p>
+        </div>
+
+    </div>
+</template>
+
 <script setup lang="ts">
 import { ref } from "vue";
 
@@ -80,30 +105,7 @@ async function saveImage() {
 
 </script>
 
-<template>
-    <div data-theme="dark" class="file-editor">
-        <h1>文件编辑器</h1>
-        <div>
-            <div class="horizontalButtons">
-                <button @click="loadFile">加载文件</button>
-                <button @click="saveFile">保存文件</button>
-            </div>
-            <textarea v-model="fileContent" rows="10" cols="50"></textarea>
-            <p>当前文件: {{ fileName }}</p>
-        </div>
-        <div>
-            <div class="horizontalButtons">
-                <button @click="loadImage">加载图片</button>
-                <button @click="randomDraw">随机绘制</button>
-                <button @click="saveImage">保存图片</button>
-            </div>
-            <canvas id="mycanvas" width="500" height="500"></canvas>
-            <img id="myimg" src="" alt="Loaded Image"/>
-            <p>当前图片: example.png</p>
-        </div>
 
-    </div>
-</template>
 
 <style scoped lang="scss">
 .file-editor {

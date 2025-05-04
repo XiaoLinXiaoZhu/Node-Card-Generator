@@ -5,6 +5,7 @@
         <p>请点击下面的按钮开始编辑：</p>
         <router-link to="/node-editor" class="start-button">开始编辑</router-link>
         <router-link to="/file-editor" class="start-button">文件编辑器</router-link>
+        <router-link to="/card-editor" class="start-button">卡片编辑器</router-link>
     </div>
 </template>
 
