@@ -60,4 +60,4 @@ class CSVReaderLocal extends LGraphNode {
         }
     }
 }
-LiteGraph.registerNodeType("卡片制作/CSV Reader", CSVReaderLocal);
+LiteGraph.registerNodeType("卡片制作/CSV Reader Local", CSVReaderLocal);

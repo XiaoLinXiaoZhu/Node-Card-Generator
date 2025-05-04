@@ -1,4 +1,4 @@
-import { LGraphNode, LiteGraph } from "litegraph.js";
+import { LGraphNode, LiteGraph, type INodeOutputSlot } from "litegraph.js";
 
 class CSVParser extends LGraphNode {
     constructor() {
@@ -12,38 +12,43 @@ class CSVParser extends LGraphNode {
     refreshOutput() {
         this.properties.inited = true;
 
-        // 从 properties 中获取原来的输出
-        const oldOutput = this.properties.output;
-        // 计算新的输出口,认为csvData的第一行是表头,将其名称作为输出口名称
+        // 直接从 this.outputs 中获取输出口名称
+        const outputNames = this.outputs.map(output => output.name);
         const csvData = this.getInputData(0);
         if (csvData) {
             const rows = csvData.split("\n").map(row => row.split(this.properties.delimiter));
             const columnCount = rows[0]?.length || 0;
-            const newOutput = ["Column Count", ...rows[0].map((columnName, i) => `[${i}] ${columnName}`)];
+            const newOutputNames = ["Column Count", ...rows[0].map((columnName, i) => `[${i}] ${columnName}`)];
+            console.log("输出口名称", outputNames, newOutputNames);
 
             // 如果新旧输出口不一样,则删除旧的输出口
-            if (JSON.stringify(oldOutput) !== JSON.stringify(newOutput)) {
-                for (let i = 1; i < oldOutput.length; i++) {
+            if (JSON.stringify(outputNames) !== JSON.stringify(newOutputNames)) {
+                for (let i = 1; i < outputNames.length; i++) {
                     this.removeOutput(1); // 从第 1 个输出口开始删除
                 }
                 // 添加新的输出口
-                for (let i = 1; i < newOutput.length; i++) {
-                    this.addOutput(newOutput[i], "array");
+                for (let i = 1; i < newOutputNames.length; i++) {
+                    this.addOutput(newOutputNames[i], "array");
                 }
-
-                this.properties.output = newOutput;
             }
 
             // 设置第 0 个输出口的值为列数
             this.setOutputData(0, columnCount);
         }
-        console.log("refreshOutput", this.properties.output, this.outputs);
+    }
+
+    onConnectInput(inputIndex: number, outputType: INodeOutputSlot["type"], outputSlot: INodeOutputSlot, outputNode: LGraphNode, outputIndex: number): boolean {
+        // 连接输入口时,刷新输出口
+        if (inputIndex === 0) {
+            this.refreshOutput();
+        }
+        return true;
     }
 
     onExecute() {
         // 它会动态增加自己的输出口
         if (!this.properties.inited) {
-            this.refreshOutput();
+            return; // 如果没有初始化,则不执行
         }
 
         const csvData = this.getInputData(0);

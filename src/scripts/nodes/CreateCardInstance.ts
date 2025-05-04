@@ -83,6 +83,7 @@ class CreateCardInstance extends LGraphNode {
             width: this.properties.width,
             height: this.properties.height,
         });
+        app.mount(div); // 挂载 VUE 组件到 div 上
 
         // 设置 输出为 CardInstance 组件的实例
         this.setOutputData(0, app); // 设置节点的输出数据
@@ -110,9 +111,9 @@ class CreateCardInstance extends LGraphNode {
 
     onExecute() {
         // 在这里可以执行一些操作，例如根据宽度和高度创建一个卡片实例
-        const width = this.properties.width;
-        const height = this.properties.height;
-        console.log("创建卡片实例，宽度：", width, "高度：", height);
+        // const width = this.properties.width;
+        // const height = this.properties.height;
+        // console.log("创建卡片实例，宽度：", width, "高度：", height);
         // 这里可以添加更多的逻辑来处理卡片实例的创建
     }
 }

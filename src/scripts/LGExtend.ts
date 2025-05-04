@@ -33,6 +33,11 @@ function addResizeEventListener(editor: LGraphCanvas) {
 }
 
 function enableBackup(canvas: LGraphCanvas) {
+    window.onbeforeunload = function () {
+        var data = JSON.stringify(graph.serialize());
+        localStorage.setItem("litegraphg demo backup", data);
+    }
+    
     var graph = canvas.graph;
     if (!graph) {
         console.error("graph not found");
@@ -44,10 +49,7 @@ function enableBackup(canvas: LGraphCanvas) {
     var graph_data = JSON.parse(data);
     graph.configure(graph_data);
 
-    window.onbeforeunload = function () {
-        var data = JSON.stringify(graph.serialize());
-        localStorage.setItem("litegraphg demo backup", data);
-    }
+    
 }
 
 

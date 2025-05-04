@@ -20,3 +20,4 @@ import "./nodes/CSVReader";
 import "./nodes/CSVReaderFromBackend";
 import "./nodes/Array2Enum";
 import "./nodes/FormatString";
+import "./nodes/CreateCardInstance";

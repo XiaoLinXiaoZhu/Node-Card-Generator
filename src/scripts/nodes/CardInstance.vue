@@ -88,7 +88,7 @@
 
   </script>
   
-  <style>
+  <style scoped lang="scss">
   .card-container {
     position: relative;
     width: fit-content;

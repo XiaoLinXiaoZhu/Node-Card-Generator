@@ -1,6 +1,7 @@
 ///@ts-nocheck
 import {LiteGraph} from "litegraph.js";
 import "./CardEditorNodes";
+
 const initLG = () => {
 
     LiteGraph.debug = false;
