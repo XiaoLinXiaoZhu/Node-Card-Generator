@@ -6,43 +6,52 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useTemplateRef } from "vue";
+import { ref, onMounted,defineEmits } from "vue";
 
-const element = useTemplateRef("dragableElement");
+const dragableElement = ref<HTMLElement | null>(null);
 const style = ref({
     left: "",
     top: "",
 });
 
+// 位置发生变化时，激活事件 moved
+const emit = defineEmits(['moved']);
+
+
 onMounted(() => {
-    if (!element.value) return;
-    element.value.style.position = 'absolute';
-    element.value.style.zIndex = '1';
-    element.value.style.cursor = 'move';
-    element.value.style.userSelect = 'none'; // Prevent text selection during drag
+    if (!dragableElement.value) return;
+    dragableElement.value.style.position = 'absolute';
+    dragableElement.value.style.zIndex = '1';
+    dragableElement.value.style.cursor = 'move';
+    dragableElement.value.style.userSelect = 'none'; // Prevent text selection during drag
 
-    style.value.left = `${element.value.offsetLeft}px`;
-    style.value.top = `${element.value.offsetTop}px`;
+    style.value.left = `${dragableElement.value.offsetLeft}px`;
+    style.value.top = `${dragableElement.value.offsetTop}px`;
 
-    element.value.addEventListener('mousedown', onMouseDown);
+    dragableElement.value.addEventListener('mousedown', onMouseDown);
 
     // 禁用默认拖动行为
-    element.value.addEventListener('dragstart', (event) => {
+    dragableElement.value.addEventListener('dragstart', (event) => {
         event.preventDefault();
     });
 });
 
 const onMouseDown = (event: MouseEvent) => {
-    if (!element.value) return;
-    const parentRect = (element.value.offsetParent as HTMLElement).getBoundingClientRect();
-    const rect = element.value.getBoundingClientRect();
+    if (!dragableElement.value) return;
+    const parentRect = (dragableElement.value.offsetParent as HTMLElement).getBoundingClientRect();
+    const rect = dragableElement.value.getBoundingClientRect();
     const offsetX = event.clientX - rect.left + parentRect.left;
     const offsetY = event.clientY - rect.top + parentRect.top;
 
+    // 记录初始位置
+    const oldLeft = style.value.left;
+    const oldTop = style.value.top;
+    let newLeft = parseInt(oldLeft, 10);
+    let newTop = parseInt(oldTop, 10);
+
     const onMouseMove = (event: MouseEvent) => {
-        const newLeft = event.clientX - offsetX;
-        const newTop = event.clientY - offsetY;
+        newLeft = event.clientX - offsetX;
+        newTop = event.clientY - offsetY;
         style.value.left = `${newLeft}px`;
         style.value.top = `${newTop}px`;
     };
@@ -50,9 +59,16 @@ const onMouseDown = (event: MouseEvent) => {
     const onMouseUp = () => {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        // Emit the new position when dragging ends
+        // 如果坐标发生变化，触发事件
+        if (newLeft !== parseInt(oldLeft, 10) || newTop !== parseInt(oldTop, 10)) {
+            emit('moved', { left: newLeft, top: newTop });
+        }
     };
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
 };
+
+
 </script>
