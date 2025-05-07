@@ -1,6 +1,7 @@
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget,type SerializedLGraphNode } from "litegraph.js";
 import CardInstance from "./CardInstance.vue";
-import {createApp, type App, type ComponentPublicInstance} from "vue";
+import {createApp} from "vue";
+import { drawCardOnNode, loadImageFromLink } from "./cardLibs";
 
 // 这个节点能够创建一个卡片元素，定义它的 长宽。
 // 卡片元素本质上是一个 VUE 组件，里面包括 使用 HTML 作为渲染的部分，也包括使用 Canvas 作为添加特效的部分。
@@ -21,6 +22,7 @@ class CreateCardInstance extends LGraphNode {
     }; // 定义属性
 
     cardLink: string; // 定义卡片链接
+    oldCardLink: string; // 定义旧的卡片链接
     cardInstance: InstanceType<typeof CardInstance> | null = null; // 定义卡片实例
     
 
@@ -49,6 +51,7 @@ class CreateCardInstance extends LGraphNode {
         this.cardInstance = cardInstance as InstanceType<typeof CardInstance>; // 设置卡片实例
 
         this.cardLink = ""; // 初始化卡片链接
+        this.oldCardLink = ""; // 初始化旧的卡片链接
 
         // 设置 输出为 CardInstance 组件的实例
         this.setOutputData(0, cardInstance); // 设置节点的输出数据
@@ -72,55 +75,36 @@ class CreateCardInstance extends LGraphNode {
     }
 
     onDrawForeground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
-        const x = this.size[0];
-        const h = this.size[1];
+        const draw = (cardLink:string) => drawCardOnNode(ctx, cardLink, {
+            cardSize: [this.properties.width, this.properties.height], // 设置卡片大小
+            ctxSize: this.size, // 设置节点大小
+            padding: 20, // 设置内边距
+            remainHeight: 70, // 设置额外预留的高度
+            scaleMode: "contain", // 设置缩放模式
+            textColor: "#666", // 设置文本颜色
+            textAlign: "end", // 设置文本对齐方式
+            borderColor: "#000", // 设置边框颜色
+            borderWidth: 2, // 设置边框宽度
+        });
 
-        ctx.textAlign = "end";
-        // 将cardinstance绘制到节点上
-        ctx.fillStyle = "#666";
-        // 绘制一个矩形作为卡片实例的占位符
-        // 计算缩放比
-        const padding = 20;
-        const remainHeight = 70; // 额外预留的高度
-        const scale = Math.min((x - 2*padding) / this.properties.width, (h - 2*padding - remainHeight) / this.properties.height);
-        const rectWidth = this.properties.width * scale;
-        const rectHeight = this.properties.height * scale;
-        ctx.fillRect(
-            padding,
-            h - rectHeight - padding,
-            rectWidth,
-            rectHeight); // 绘制矩形
+        if (!this.cardInstance) return; // 如果没有 app，则不绘制
+        const cardLink = this.cardInstance.getCardLink(); // 获取卡片链接
+        if (this.oldCardLink !== cardLink) {
+            this.oldCardLink = cardLink; // 更新 oldCardLink 属性值
+            loadImageFromLink(cardLink).then((img) => { // 加载图片
+                // 获取图片的宽高
+                const cardWidth = img.width; // 获取图片宽度
+                const cardHeight = img.height; // 获取图片高度
 
-        ctx.fillStyle = "#fff";
-        ctx.fillText("CardInstance", x - 20, h - 30); // 绘制文本
-
-        ctx.fillText("Width: " + this.properties.width, x - 20, h - 50); // 绘制宽度文本
-        ctx.fillText("Height: " + this.properties.height, x - 20, h - 70); // 绘制高度文本
-
-        // 绘制边框
-        ctx.strokeStyle = "#000"; // 设置边框颜色
-        ctx.lineWidth = 2;
-        ctx.strokeRect(
-            padding,
-            h - rectHeight - padding,
-            rectWidth,
-            rectHeight); // 绘制矩形边框
-
-        // 将 VUE 组件渲染到节点上
-        // cardInstance 组件提供了一个 cardLink 属性，是渲染出的图片的链接
-        if (!this.cardInstance) return; // 如果没有 cardInstance，则不绘制
-        let newCardLink = this.cardInstance.cardLink; // 获取 cardLink 属性值
-        if (newCardLink !== this.cardLink) {
-            this.cardLink = newCardLink; // 更新 cardLink 属性值
-            console.log("更新卡片链接", this.cardLink); // 打印卡片链接
-            
-            // 将图片渲染到节点上
-            const img = new Image(); // 创建图片对象
-            img.src = this.cardLink; // 设置图片链接
-            img.onload = () => {
-                ctx.drawImage(img, padding, h - rectHeight - padding, rectWidth, rectHeight); // 绘制图片
-            };
+                this.properties.width = cardWidth; // 更新卡片宽度
+                this.properties.height = cardHeight; // 更新卡片高度
+            });
+            draw(cardLink); // 绘制卡片
+        } else {
+            draw(cardLink); // 绘制卡片
         }
+        
+        return; // 直接返回，不绘制其他内容
     }
 
     onWidthChange(value: number) {
@@ -146,12 +130,6 @@ class CreateCardInstance extends LGraphNode {
     }
 
     onExecute() {
-        // 在这里可以执行一些操作，例如根据宽度和高度创建一个卡片实例
-        // const width = this.properties.width;
-        // const height = this.properties.height;
-        // console.log("创建卡片实例，宽度：", width, "高度：", height);
-        // 这里可以添加更多的逻辑来处理卡片实例的创建
-        // this.setOutputData(0, this.app); // 确保每次执行时都输出 app
     }
 }
 

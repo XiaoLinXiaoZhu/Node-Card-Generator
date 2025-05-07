@@ -12,7 +12,7 @@
 import CardInstance from '../scripts/nodes/CardInstance.vue';
 import { ref, onMounted, watchEffect, computed, watch, useTemplateRef } from 'vue';
 import type { CardElement } from '../scripts/nodes/cardLibs';
-import { addCardElementToCard } from '../scripts/nodes/cardLibs';
+import { addCardElement } from '../scripts/nodes/cardLibs';
 
 const elements = ref<CardElement[]>([
     { uid: '123', content: "123", type: 'text', style: { color: 'red', fontSize: '20px' } },
@@ -45,7 +45,7 @@ function addEl(){
         console.error("cardInstance is null");
         return;
     }
-    addCardElementToCard(cardInstance.value, element1)
+    addCardElement(cardInstance.value, element1)
     //debug
     console.log("addEl", cardInstance.value, element1)
 }

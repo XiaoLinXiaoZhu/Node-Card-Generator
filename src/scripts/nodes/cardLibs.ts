@@ -1,4 +1,3 @@
-import type {ComponentInternalInstance,ComponentPublicInstance } from "vue";
 import CardInstance from "./CardInstance.vue";
 export interface CardElement {
     uid: string;
@@ -15,7 +14,35 @@ export interface CardEffect {
     value: string;
 }
 
-export function addCardElementToCard(card: InstanceType<typeof CardInstance>, element: CardElement): InstanceType<typeof CardInstance> {
+
+const cardElementUidMap: Record<string, CardElement> = {}; // 用于存储 uid 和 cardElement 的映射关系
+
+export function createCardElement(el : CardElement,adder?: Object): CardElement {
+    // 为其生成一个 uid
+    if (!el.uid || el.uid === "") {
+        // el.uid = Math.random().toString(36).substring(2, 10); // 生成一个随机的 uid
+        do {
+            el.uid = Math.random().toString(36).substring(2, 10); // 生成一个随机的 uid
+        } while (cardElementUidMap[el.uid]); // 确保 uid 唯一
+
+        cardElementUidMap[el.uid] = el; // 将 uid 和 cardElement 存储到映射关系中
+    }
+
+    if (adder && adder !== "") {
+        el.adder = adder; // 设置添加者
+    }
+
+    return {
+        uid: el.uid,
+        adder: el.adder,
+        type: el.type,
+        style: el.style,
+        content: el.content,
+        src: el.src,
+    };
+}
+
+export function addCardElement(card: InstanceType<typeof CardInstance>, element: CardElement): InstanceType<typeof CardInstance> {
     let elements = card.elements as CardElement[];
 
     // 每个 CardElement 都有一个独立的uid
@@ -25,8 +52,8 @@ export function addCardElementToCard(card: InstanceType<typeof CardInstance>, el
     }
     // 每个 添加者最多只能添加一个Element
     if (element.adder && element.adder !== ""){
-        // 从element中找到
-        elements = elements.filter((e)=> e.adder !== element.adder);
+        // 从element中找到 之前的，并删除
+        elements = elements.filter((e)=> e.adder !== element.adder); // 删除之前的元素
     }
 
     elements.push(element);
@@ -35,6 +62,20 @@ export function addCardElementToCard(card: InstanceType<typeof CardInstance>, el
     //debug
     console.log("添加元素", element, elements,card.elements);
 
+    return card;
+}
+
+export function removeCardElement(card: InstanceType<typeof CardInstance>, element: CardElement): InstanceType<typeof CardInstance> {
+    let elements = card.elements as CardElement[];
+    elements = elements.filter((e) => e.uid !== element.uid); // 删除元素
+    card.setElements(elements); // 更新元素列表
+    return card;
+}
+
+export function removeCardElementByAdder(card: InstanceType<typeof CardInstance>, adder: string): InstanceType<typeof CardInstance> {
+    let elements = card.elements as CardElement[];
+    elements = elements.filter((e) => e.adder !== adder); // 删除元素
+    card.setElements(elements); // 更新元素列表
     return card;
 }
 
@@ -70,7 +111,7 @@ export function drawCardOnNode(ctx: CanvasRenderingContext2D, cardLink: string, 
         ctxSize: nodeSize = [200, 300],
         autoGetCtxSize = false,
         padding = 20,
-        remainHeight = 70,
+        remainHeight = 20,
         scaleMode = "contain",
         textColor = "#666",
         textAlign = "end",

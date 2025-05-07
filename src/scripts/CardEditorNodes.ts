@@ -22,3 +22,4 @@ import "./nodes/Array2Enum";
 import "./nodes/FormatString";
 import "./nodes/CreateCardInstance";
 import "./nodes/DisplayCardInstance";
+import "./nodes/AddElementToCard";

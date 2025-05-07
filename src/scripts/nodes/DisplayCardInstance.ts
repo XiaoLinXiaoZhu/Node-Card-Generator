@@ -1,5 +1,4 @@
 import { LGraph, LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget, type SerializedLGraphNode } from "litegraph.js";
-import { type App } from "vue";
 import { loadImageFromLink,drawCardOnNode } from "./cardLibs";
 import CardInstance from "./CardInstance.vue";
 
@@ -83,7 +82,6 @@ class DisplayCardInstance extends LGraphNode {
                 cardSize: [this.properties.cardWidth, this.properties.cardHeight], // 设置卡片大小
                 ctxSize: [this.size[0], this.size[1]], // 设置节点大小
                 scaleMode: "contain", // 设置缩放模式
-                debugMode: true, // 设置调试模式
             });
         } else {
             drawCardOnNode(ctx, cardLink,{

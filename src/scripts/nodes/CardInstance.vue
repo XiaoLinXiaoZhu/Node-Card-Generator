@@ -3,7 +3,7 @@
     <!-- HTML 渲染部分 -->
     <div ref="htmlCard" class="card" :style="cardStyle">
       <DragableElement v-for="(el, index) in elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
-        {{ el.content }}
+        {{ typeof console.log("Renderer element",el) || el.content }}
         <img v-if="el.type === 'image'" :src="el.src">
       </DragableElement>
     </div>
@@ -110,7 +110,15 @@ async function renderCard() {
   cardLink.value = url;
 
   const endTime = Date.now();
-  console.log("Card rendered in:", endTime - startTime, "ms", "ID:", currentRenderId, "Link:", cardLink.value);
+  // console.log("Card rendered in:", endTime - startTime, "ms", "ID:", currentRenderId, "Link:", cardLink.value);
+  console.log(
+    `Card rendered in: ${endTime - startTime} ms, 
+    ID: ${currentRenderId}, 
+    Link: ${cardLink.value}
+    Elements: ${elements.value.length},
+    Effects: ${effects.value.length},
+    `
+  )
 
   emit('rerender', url);
 
@@ -157,7 +165,9 @@ defineExpose({
   cardLink,
   getCardLink: () => cardLink.value,
   elements,
-  setElements: (e:CardElement[]) => elements.value = e,
+  setElements: (e:CardElement[]) => {
+    elements.value = e;
+  },
   effects,
   width,
   setWidth: (w: number) => width.value = w,
