@@ -12,7 +12,7 @@ import path from "path";
 import fs from "fs";
 
 // 将 nodes 目录下的所有文件加载到 LiteGraph 中
-import "./nodes/AddElementOnCard";
+import "./nodes/AddElementToCard";
 import "./nodes/ArrayGet";
 import "./nodes/CSVParser";
 import "./nodes/GetNumber";
@@ -21,3 +21,4 @@ import "./nodes/CSVReaderFromBackend";
 import "./nodes/Array2Enum";
 import "./nodes/FormatString";
 import "./nodes/CreateCardInstance";
+import "./nodes/DisplayCardInstance";

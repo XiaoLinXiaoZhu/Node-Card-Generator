@@ -15,12 +15,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, computed,watch } from 'vue';
+import { ref, onMounted, watchEffect, computed, watch } from 'vue';
 import { toPng } from 'html-to-image';
 import { applyEffect } from '../afterEffect/imageEffects.ts';
 import DragableElement from '../../components/DragableElement.vue';
-import { type CardElement, type CardEffect } from './cardLibs.js';
-
+import { type CardElement, type CardEffect, loadImageFromLink } from './cardLibs.js';
 
 const props = defineProps({
   elements: {
@@ -30,39 +29,45 @@ const props = defineProps({
   effects: {
     type: Array as () => CardEffect[],
     default: () => [],
-  }
+  },
+  width: {
+    type: Number,
+    default: 800,
+  },
+  height: {
+    type: Number,
+    default: 600,
+  },
 });
 
-// 自动绑定的 templateRef
+const emit = defineEmits(['rerender']);
+
+// 将 props 初始化到 ref 中
+const elements = ref<CardElement[]>([...props.elements]);
+const effects = ref<CardEffect[]>([...props.effects]);
+const width = ref<number>(props.width);
+const height = ref<number>(props.height);
+
 const htmlCard = ref<HTMLElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
-
-const width = ref(800);
-const height = ref(600);
 
 const cardLink = ref("");
 
 const cardStyle = computed(() => {
-  const blur = props.effects.find(e => e.name === 'blur')?.value || '0';
-  return { filter: `blur(${blur})` };
+  const blur = effects.value.find(e => e.name === 'blur')?.value || '0';
+  return { 
+    filter: `blur(${blur})`,
+    width: `${width.value}px`,
+    height: `${height.value}px`
+  };
 });
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => resolve(img);
-    img.onerror = (err) => reject(err);
-  });
-}
 
 let latestRenderId = 0;
 async function renderCard() {
   const currentRenderId = ++latestRenderId;
-  //debug
+  const startTime = Date.now();
   console.log("Rendering card with ID:", currentRenderId);
 
-  // 1. 将HTML转为图片
   if (!htmlCard.value) {
     throw new Error("htmlCard is not initialized");
   }
@@ -77,41 +82,43 @@ async function renderCard() {
   }
 
   const _canvas = canvas.value as HTMLCanvasElement;
-  if (!_canvas) {
-    throw new Error("Canvas is not initialized");
-  }
-  // 2. 绘制到Canvas进行后处理
-  if (currentRenderId !== latestRenderId) return; // 如果有新的渲染请求，则跳过当前渲染
-  const ctx = _canvas.getContext('2d',{willReadFrequently: true, alpha: true});
+  const ctx = _canvas.getContext('2d', { willReadFrequently: true, alpha: true });
   if (!ctx) {
     throw new Error("Failed to get canvas context");
   }
-  if (currentRenderId !== latestRenderId) return;
-  const img = await loadImage(htmlPNG); // 等待图片加载完成
-  if (currentRenderId !== latestRenderId) return;
+
+  const img = await loadImageFromLink(htmlPNG);
   ctx.clearRect(0, 0, width.value, height.value);
-  if (currentRenderId !== latestRenderId) return;
   ctx.drawImage(img, 0, 0);
 
-  // 3. 应用附加特效
-  if (currentRenderId !== latestRenderId) return;
-  // applyEffects(ctx, props.effects);
-  for (const effect of props.effects) {
-    if (currentRenderId !== latestRenderId) return;
+  for (const effect of effects.value) {
     await applyEffect(ctx, effect);
   }
-  if (currentRenderId !== latestRenderId) return;
 
-  // 4. 最终导出
-  cardLink.value = _canvas.toDataURL('image/png');
+  const blob = await new Promise<Blob>((resolve) => {
+    _canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        throw new Error("Failed to convert canvas to Blob");
+      }
+    }, 'image/png');
+  });
+
+  const url = URL.createObjectURL(blob);
+  URL.revokeObjectURL(cardLink.value);
+  cardLink.value = url;
+
+  const endTime = Date.now();
+  console.log("Card rendered in:", endTime - startTime, "ms", "ID:", currentRenderId, "Link:", cardLink.value);
+
+  emit('rerender', url);
 
   return cardLink.value;
-};
+}
 
-// 当 props.elements 或 props.effects 变化时，重新渲染。
-// 这里需要深度监听，因为可能会有嵌套对象的变化
 watch(
-  () => [props.elements, props.effects],
+  () => [elements.value, effects.value, width.value, height.value],
   async () => {
     try {
       await renderCard();
@@ -122,8 +129,7 @@ watch(
   { deep: true }
 );
 
-// 导出PNG
-async function exportPNG(){
+async function exportPNG() {
   if (!cardLink.value) {
     try {
       await renderCard();
@@ -133,33 +139,29 @@ async function exportPNG(){
     }
   }
 
-  if (!cardLink.value) {
-    console.error("Failed to generate card link");
-    return;
-  }
-
   const link = document.createElement('a');
   link.download = 'card.png';
   link.href = cardLink.value;
   link.click();
-};
+}
 
-// 初始化Canvas尺寸
 onMounted(() => {
-  watchEffect(() => {
-    if (htmlCard.value) {
-      width.value = htmlCard.value.offsetWidth;
-      height.value = htmlCard.value.offsetHeight;
-    }
+  renderCard().catch(error => {
+    console.error("Error during initial render:", error);
   });
 });
 
-//对外的方法
+// 对外暴露的接口
 defineExpose({
   exportPNG,
-  cardLink,
-  elements: props.elements,
-  effects: props.effects,
+  getCardLink: () => cardLink.value,
+  elements,
+  setElements: (e:CardElement[]) => elements.value = e,
+  effects,
+  width,
+  setWidth: (w: number) => width.value = w,
+  height,
+  setHeight: (h: number) => height.value = h,
 });
 
 </script>
@@ -172,8 +174,6 @@ defineExpose({
 }
 
 .card {
-  width: 840px;
-  min-height: 640px;
   background: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
