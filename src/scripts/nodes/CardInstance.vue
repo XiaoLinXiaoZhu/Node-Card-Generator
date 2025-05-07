@@ -154,6 +154,7 @@ onMounted(() => {
 // 对外暴露的接口
 defineExpose({
   exportPNG,
+  cardLink,
   getCardLink: () => cardLink.value,
   elements,
   setElements: (e:CardElement[]) => elements.value = e,

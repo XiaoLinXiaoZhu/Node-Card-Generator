@@ -1,5 +1,5 @@
-import type { App, ComponentInternalInstance } from "vue";
-
+import type {ComponentInternalInstance,ComponentPublicInstance } from "vue";
+import CardInstance from "./CardInstance.vue";
 export interface CardElement {
     uid: string;
     adder?: Object;
@@ -15,19 +15,8 @@ export interface CardEffect {
     value: string;
 }
 
-export function addCardElementToCard(card: App|ComponentInternalInstance, element: CardElement): App {
-    // 给 App 的props.elements 添加一个元素
-    // const elements = card.$props.elements as CardElement[];
-    //debug
-    // console.log("添加元素到卡片", card,card._instance, element);
-
-    // if (!card || !card._instance) return card;
-
-    // 如果card 的类型是 App，则使用 card._instance
-    // 否则使用 card
-    card = (card as App)._instance || card as ComponentInternalInstance;
-
-    let elements = card?.exposed?.elements as CardElement[];
+export function addCardElementToCard(card: InstanceType<typeof CardInstance>, element: CardElement): InstanceType<typeof CardInstance> {
+    let elements = card.elements as CardElement[];
 
     // 每个 CardElement 都有一个独立的uid
     // 若出现uid重复的，则不添加：
@@ -42,7 +31,9 @@ export function addCardElementToCard(card: App|ComponentInternalInstance, elemen
 
     elements.push(element);
 
-    card._instance.exposed?.setElements(elements);
+    card.setElements(elements); // 更新元素列表
+    //debug
+    console.log("添加元素", element, elements,card.elements);
 
     return card;
 }

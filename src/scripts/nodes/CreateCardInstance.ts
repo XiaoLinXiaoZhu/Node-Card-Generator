@@ -1,6 +1,6 @@
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget,type SerializedLGraphNode } from "litegraph.js";
 import CardInstance from "./CardInstance.vue";
-import {createApp, type App} from "vue";
+import {createApp, type App, type ComponentPublicInstance} from "vue";
 
 // 这个节点能够创建一个卡片元素，定义它的 长宽。
 // 卡片元素本质上是一个 VUE 组件，里面包括 使用 HTML 作为渲染的部分，也包括使用 Canvas 作为添加特效的部分。
@@ -19,8 +19,9 @@ class CreateCardInstance extends LGraphNode {
         width: CreateCardInstance.defaultCanvasSize[0], // 定义默认宽度
         height: CreateCardInstance.defaultCanvasSize[1], // 定义默认高度
     }; // 定义属性
-    app: App; // 定义 VUE 组件实例
+
     cardLink: string; // 定义卡片链接
+    cardInstance: InstanceType<typeof CardInstance> | null = null; // 定义卡片实例
     
 
     constructor() {
@@ -44,13 +45,13 @@ class CreateCardInstance extends LGraphNode {
             height: this.properties.height,
         });
         app.provide("app", app); // 提供 app 实例
-        app.mount(div); // 挂载 VUE 组件到 div 上
-        this.app = app; // 保存 VUE 组件实例
+        const cardInstance = app.mount(div); // 挂载 VUE 组件到 div 上
+        this.cardInstance = cardInstance as InstanceType<typeof CardInstance>; // 设置卡片实例
 
         this.cardLink = ""; // 初始化卡片链接
 
         // 设置 输出为 CardInstance 组件的实例
-        this.setOutputData(0, app); // 设置节点的输出数据
+        this.setOutputData(0, cardInstance); // 设置节点的输出数据
     }
 
     onConfigure(o: SerializedLGraphNode): void {
@@ -65,9 +66,9 @@ class CreateCardInstance extends LGraphNode {
         this.widthWidget!.value = o.properties.width; // 更新宽度 widget 的值
         this.heightWidget!.value = o.properties.height; // 更新高度 widget 的值
 
-        if (!this.app || !this.app._instance) return;
-        this.app._instance.exposed?.setWidth(o.properties.width);
-        this.app._instance.exposed?.setHeight(o.properties.height);
+        if (!this.cardInstance) return;
+        this.cardInstance.width = o.properties.width; // 更新 VUE 组件的宽度
+        this.cardInstance.height = o.properties.height; // 更新 VUE 组件的高度
     }
 
     onDrawForeground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
@@ -107,7 +108,8 @@ class CreateCardInstance extends LGraphNode {
 
         // 将 VUE 组件渲染到节点上
         // cardInstance 组件提供了一个 cardLink 属性，是渲染出的图片的链接
-        let newCardLink = this.app._instance?.exposed?.cardLink; // 获取 cardLink 属性值
+        if (!this.cardInstance) return; // 如果没有 cardInstance，则不绘制
+        let newCardLink = this.cardInstance.cardLink; // 获取 cardLink 属性值
         if (newCardLink !== this.cardLink) {
             this.cardLink = newCardLink; // 更新 cardLink 属性值
             console.log("更新卡片链接", this.cardLink); // 打印卡片链接
@@ -125,8 +127,8 @@ class CreateCardInstance extends LGraphNode {
         this.properties.width = value; // 更新宽度属性值
         // this.widthWidget!.value = value; // 更新 widget 的值
 
-        if (this.app._instance) {
-            this.app._instance.exposed?.setWidth(value); // 更新 VUE 组件的宽度
+        if (this.cardInstance) {
+            this.cardInstance.setWidth(value); // 更新 VUE 组件的宽度
         }
     }
 
@@ -134,13 +136,13 @@ class CreateCardInstance extends LGraphNode {
         this.properties.height = value; // 更新高度属性值
         // this.heightWidget!.value = value; // 更新 widget 的值
 
-        if (this.app._instance) {
-            this.app._instance.exposed?.setHeight(value); // 更新 VUE 组件的高度
+        if (this.cardInstance) {
+            this.cardInstance.setHeight(value); // 更新 VUE 组件的高度
         }
     }
     
     onConnectionsChange(type: number, slotIndex: number, isConnected: boolean, link: LLink, ioSlot: (INodeOutputSlot | INodeInputSlot)): void {
-        this.setOutputData(0, this.app);
+        this.setOutputData(0, this.cardInstance);
     }
 
     onExecute() {

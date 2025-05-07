@@ -37,9 +37,9 @@ const cardInstance = ref<InstanceType<typeof CardInstance> | null>(null);
 function addEl(){
     const element1:CardElement = {
         uid: '845',
-        content: "123",
+        content: "4562",
         type: 'text',
-        style: { color: 'red', fontSize: '20px' }
+        style: { color: 'red', fontSize: '50px' }
     }
     if (!cardInstance.value) {
         console.error("cardInstance is null");
