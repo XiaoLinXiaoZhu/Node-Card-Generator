@@ -1,5 +1,5 @@
 import { LGraph, LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget, type SerializedLGraphNode } from "litegraph.js";
-import { loadImageFromLink,drawCardOnNode } from "./cardLibs";
+import { loadImageFromLink,drawCardLinkOnNode, drawCardCanvasOnNode } from "./cardLibs";
 import CardInstance from "./CardInstance.vue";
 
 // 这个节点能够 将传入的 CardInstance 组件渲染到节点上。
@@ -10,16 +10,8 @@ class DisplayCardInstance extends LGraphNode {
     static pixels_threshold = 10;
     static markers_color = "#666";
 
-    properties = {
-        cardWidth: 200,
-        cardHeight: 300,
-        cardLink: "",
-    }
-
-
     cardInstance: InstanceType<typeof CardInstance> | null = null; // 卡片实例
-    oldCardLink: string | null = null; // 上一个 cardLink 属性值
-    needGetCardInstance = true; // 是否需要获取 app 属性值
+    needGetCardInstance = true; // 是否需要获取 CardInstance 属性值
 
     constructor() {
         super(DisplayCardInstance.title);
@@ -61,42 +53,31 @@ class DisplayCardInstance extends LGraphNode {
             //debug
             console.log("断开连接", type, slotIndex, isConnected, link, ioSlot);
             this.cardInstance = null; // 清空 app
-            this.oldCardLink = null; // 清空 oldCardLink
         }
     }
 
     onDrawForeground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
         if (!this.cardInstance) return; // 如果没有 app，则不绘制
-        const cardLink = this.cardInstance.getCardLink(); // 获取卡片链接
-        if (this.oldCardLink !== cardLink) {
-            this.oldCardLink = cardLink; // 更新 oldCardLink 属性值
-            loadImageFromLink(cardLink).then((img) => { // 加载图片
-                // 获取图片的宽高
-                const cardWidth = img.width; // 获取图片宽度
-                const cardHeight = img.height; // 获取图片高度
+        const cardCanvas = this.cardInstance.getCanvas(); // 获取卡片画布
 
-                this.properties.cardWidth = cardWidth; // 更新卡片宽度
-                this.properties.cardHeight = cardHeight; // 更新卡片高度
-            });
-            drawCardOnNode(ctx, cardLink,{
-                cardSize: [this.properties.cardWidth, this.properties.cardHeight], // 设置卡片大小
-                ctxSize: [this.size[0], this.size[1]], // 设置节点大小
-                scaleMode: "contain", // 设置缩放模式
-            });
-        } else {
-            drawCardOnNode(ctx, cardLink,{
-                cardSize: [this.properties.cardWidth, this.properties.cardHeight], // 设置卡片大小
-                ctxSize: [this.size[0], this.size[1]], // 设置节点大小
+        const draw = () => {
+            if (!cardCanvas) return; // 如果没有卡片画布，则不绘制
+            // 直接绘制卡片画布效率更高
+            drawCardCanvasOnNode(ctx, cardCanvas, {
+                autoGetCardSize: true, // 自动获取卡片大小
+                // autoGetCtxSize: true, // 自动获取节点大小
+                ctxSize: this.size, // 设置节点大小
                 scaleMode: "contain", // 设置缩放模式
                 // debugMode: true, // 设置调试模式
             });
         }
+
+        draw(); // 绘制卡片
     }
 
     onExecute(): void {
         if (this.needGetCardInstance) {
             this.cardInstance = this.getInputData(0); // 获取输入数据
-            this.oldCardLink = null; // 清空 oldCardLink 属性值
             this.needGetCardInstance = false; // 重置标志位
         }
     }

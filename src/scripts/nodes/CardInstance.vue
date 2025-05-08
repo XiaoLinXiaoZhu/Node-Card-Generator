@@ -3,7 +3,7 @@
     <!-- HTML 渲染部分 -->
     <div ref="htmlCard" class="card" :style="cardStyle">
       <DragableElement v-for="(el, index) in elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
-        {{ typeof console.log("Renderer element",el) || el.content }}
+        {{ el.content }}
         <img v-if="el.type === 'image'" :src="el.src">
       </DragableElement>
     </div>
@@ -164,6 +164,7 @@ defineExpose({
   exportPNG,
   cardLink,
   getCardLink: () => cardLink.value,
+  getCanvas: () => canvas.value,
   elements,
   setElements: (e:CardElement[]) => {
     elements.value = e;

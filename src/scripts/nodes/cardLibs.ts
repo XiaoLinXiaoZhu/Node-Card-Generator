@@ -1,7 +1,8 @@
 import CardInstance from "./CardInstance.vue";
+import { UidManager } from "./uidGenerator";
 export interface CardElement {
     uid: string;
-    adder?: Object;
+    adder?: string;
     type: string;
     style: Record<string, string>;
     content?: string;
@@ -15,21 +16,37 @@ export interface CardEffect {
 }
 
 
-const cardElementUidMap: Record<string, CardElement> = {}; // 用于存储 uid 和 cardElement 的映射关系
+// const cardElementUidMap: Record<string, CardElement> = {}; // 用于存储 uid 和 cardElement 的映射关系
+// const adderUidMap: Record<string, Object> = {}; // 用于存储 adder 和 cardElement 的映射关系
+const cardElementUid : UidManager<CardElement> = new UidManager<CardElement>("cardElementUid_"); // 用于存储 uid 和 cardElement 的映射关系
+const adderUidMap : UidManager<Object> = new UidManager<Object>("adderUid_"); // 用于存储 adder 和 cardElement 的映射关系
 
-export function createCardElement(el : CardElement,adder?: Object): CardElement {
-    // 为其生成一个 uid
+export function createCardElement(el : CardElement,adder?: Object|string): CardElement {
+    // 为 element 其生成一个 uid
+    // 不论如何，既然是调用create ，就认为是新建一个元素
+
     if (!el.uid || el.uid === "") {
-        // el.uid = Math.random().toString(36).substring(2, 10); // 生成一个随机的 uid
-        do {
-            el.uid = Math.random().toString(36).substring(2, 10); // 生成一个随机的 uid
-        } while (cardElementUidMap[el.uid]); // 确保 uid 唯一
-
-        cardElementUidMap[el.uid] = el; // 将 uid 和 cardElement 存储到映射关系中
+        el.uid = cardElementUid.add(el); // 生成 uid
+    } else {
+        if (cardElementUid.has(el.uid)) {
+            // 将旧的 销毁
+            const oldEl = cardElementUid.getObj(el.uid); // 获取旧的元素
+            if (oldEl) {
+                cardElementUid.remove(oldEl.uid); // 删除旧的元素
+            }
+        }
+        el.uid = cardElementUid.add(el); // 生成 uid
     }
 
+
+    // 但是adder 不会认为是新建的，如果它已经有了，则不再添加
     if (adder && adder !== "") {
-        el.adder = adder; // 设置添加者
+        // 如果 adder 是 object，则将其转换为字符串
+        if (typeof adder === "object") {
+            el.adder = adderUidMap.getUid(adder); // 生成 uid
+        } else {
+            el.adder = adder; // 直接赋值
+        }
     }
 
     return {
@@ -48,12 +65,14 @@ export function addCardElement(card: InstanceType<typeof CardInstance>, element:
     // 每个 CardElement 都有一个独立的uid
     // 若出现uid重复的，则不添加：
     if (elements.some((e)=>e.uid === element.uid)){
+        console.error("uid 已存在", element.uid); // uid 已存在
         return card;
     }
     // 每个 添加者最多只能添加一个Element
     if (element.adder && element.adder !== ""){
         // 从element中找到 之前的，并删除
         elements = elements.filter((e)=> e.adder !== element.adder); // 删除之前的元素
+        console.log("删除之前的元素", element.adder, elements); // 删除之前的元素
     }
 
     elements.push(element);
@@ -72,8 +91,26 @@ export function removeCardElement(card: InstanceType<typeof CardInstance>, eleme
     return card;
 }
 
-export function removeCardElementByAdder(card: InstanceType<typeof CardInstance>, adder: string): InstanceType<typeof CardInstance> {
+export function removeCardElementByAdder(card: InstanceType<typeof CardInstance>, adder: Object | string): InstanceType<typeof CardInstance> {
     let elements = card.elements as CardElement[];
+    if (!adder || adder === "") {
+        return card; // 如果没有 adder，则不删除
+    }
+    if (typeof adder === "object") {
+        adder = adderUidMap.getUid(adder); // 生成 uid
+    }
+    //debug
+    console.log("删除元素", adder, elements);
+    const deletedElements: CardElement[] = []; // 用于存储删除的元素
+    elements.forEach((e) => {
+        //debug
+        console.log("比较元素", e, e.adder, adder, "\ntypeof adder",  typeof e.adder,typeof adder,"\n", e.adder === adder);
+        if (e.adder == adder) {
+            deletedElements.push(e); // 找到要删除的元素
+        }
+    });
+    console.log("删除的元素", deletedElements);
+
     elements = elements.filter((e) => e.adder !== adder); // 删除元素
     card.setElements(elements); // 更新元素列表
     return card;
@@ -86,6 +123,27 @@ export function loadImageFromLink(src: string): Promise<HTMLImageElement> {
         img.onload = () => resolve(img);
         img.onerror = (err) => reject(err);
     });
+}
+
+const imageCache: Record<string, HTMLImageElement> = {}; // 用于缓存图片
+const maxCacheSize = 20; // 最大缓存大小4
+export function loadImageFromLinkSync(src: string): HTMLImageElement {
+    if (imageCache[src]) {
+        return imageCache[src]; // 如果缓存中有图片，则直接返回
+    }
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+        imageCache[src] = img; // 将图片缓存到对象中
+    }
+    img.onerror = (err) => {
+        console.error("图片加载失败", err); // 图片加载失败
+    };
+    if (Object.keys(imageCache).length > maxCacheSize) {
+        const firstKey = Object.keys(imageCache)[0]; // 获取第一个键
+        delete imageCache[firstKey]; // 删除第一个键对应的图片
+    }
+    return img; // 返回图片
 }
 
 
@@ -103,7 +161,7 @@ export type DrawCardOnCtxOptions = {
     borderWidth?: number; // default 2
     debugMode?: boolean; // default false
 };
-export function drawCardOnNode(ctx: CanvasRenderingContext2D, cardLink: string, options: DrawCardOnCtxOptions): void {
+export function drawCardLinkOnNode(ctx: CanvasRenderingContext2D, cardLink: string, options: DrawCardOnCtxOptions): void {
     if (!cardLink) return; // 如果没有 cardLink，则不绘制
     const {
         cardSize = [200, 300],
@@ -205,5 +263,119 @@ export function drawCardOnNode(ctx: CanvasRenderingContext2D, cardLink: string, 
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = borderWidth;
     ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+
+    // 绘制图片
+    const img = loadImageFromLinkSync(cardLink); // 同步加载图片
+    ctx.drawImage(img, rectX, rectY, rectWidth, rectHeight); // 绘制图片
 }
 
+
+export function drawCardCanvasOnNode(ctx: CanvasRenderingContext2D, canvas:HTMLCanvasElement, options: DrawCardOnCtxOptions): void {
+    if (!canvas) return; // 如果没有 cardLink，则不绘制
+    const {
+        cardSize = [200, 300],
+        autoGetCardSize = false,
+        ctxSize: nodeSize = [200, 300],
+        autoGetCtxSize = false,
+        padding = 20,
+        remainHeight = 20,
+        scaleMode = "contain",
+        textColor = "#666",
+        textAlign = "end",
+        borderColor = "#000",
+        borderWidth = 2,
+        debugMode = false,
+    } = options;
+
+    if (debugMode) {
+        console.log("绘制卡片实例", options);
+    }
+
+    let finalCardSize = cardSize;
+    let finalNodeSize = nodeSize;
+
+    const sourceCanvas = canvas as HTMLCanvasElement;
+    const sourceCtx = sourceCanvas.getContext("2d");
+
+    // 自动获取卡片画布的大小
+    if (autoGetCardSize) {
+        if (sourceCtx) {
+            finalCardSize = [sourceCanvas.width, sourceCanvas.height];
+            if (debugMode) {
+                console.log("自动获取卡片画布大小", finalCardSize);
+            }
+        } else {
+            console.error("无法获取源画布的上下文");
+        }
+    }
+
+    // 自动获取节点大小
+    if (autoGetCtxSize) {
+        finalNodeSize = [ctx.canvas.width, ctx.canvas.height];
+        if (debugMode) {
+            console.log("自动获取节点大小", finalNodeSize);
+        }
+    }
+
+    // 获取图片的宽高
+    const cardWidth = finalCardSize[0];
+    const cardHeight = finalCardSize[1];
+
+    // 获取节点的宽高
+    const nodeWidth = finalNodeSize[0];
+    const nodeHeight = finalNodeSize[1];
+
+    if (debugMode) {
+        console.log("绘制卡片实例", sourceCanvas, ctx);
+        console.log(`在 ${nodeWidth}*${nodeHeight} 的节点大小上绘制 ${cardWidth}*${cardHeight} 的图片`);
+    }
+
+    ctx.textAlign = textAlign;
+    ctx.fillStyle = textColor;
+
+    // 计算缩放比
+    let scale: number;
+    if (scaleMode === "contain") {
+        scale = Math.min(
+            (nodeWidth - 2 * padding) / cardWidth,
+            (nodeHeight - 2 * padding - remainHeight) / cardHeight
+        );
+    } else if (scaleMode === "cover") {
+        scale = Math.max(
+            (nodeWidth - 2 * padding) / cardWidth,
+            (nodeHeight - 2 * padding - remainHeight) / cardHeight
+        );
+    } else {
+        scale = 1; // 默认不缩放
+    }
+
+    if (debugMode) {
+        console.log("缩放比", scale);
+    }
+
+    const rectWidth = cardWidth * scale;
+    const rectHeight = cardHeight * scale;
+
+    const rectX = padding;
+    const rectY = nodeHeight - rectHeight - padding;
+
+    // 绘制矩形
+    ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+    if (debugMode) {
+        console.log("绘制矩形", rectX, rectY, rectWidth, rectHeight);
+    }
+
+    // 绘制文本
+    ctx.fillStyle = textColor;
+    ctx.fillText("CardInstance " + sourceCanvas, nodeWidth - padding, nodeHeight - 30);
+    ctx.fillText("Width: " + cardWidth, nodeWidth - padding, nodeHeight - 50);
+    ctx.fillText("Height: " + cardHeight, nodeWidth - padding, nodeHeight - 70);
+
+    // 绘制边框
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+
+    // 绘制图片,直接将 sourceCanvas 绘制到 ctx 上
+    ctx.drawImage(sourceCanvas, rectX, rectY, rectWidth, rectHeight); // 绘制图片
+}
