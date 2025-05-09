@@ -1,8 +1,7 @@
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget,type SerializedLGraphNode } from "litegraph.js";
 import CardInstance from "./CardInstance.vue";
-import {createApp} from "vue";
-import { addCardElement, createCardElement, drawCardLinkOnNode, loadImageFromLink, removeCardElementByAdder } from "./cardLibs";
-import { type CardElement } from "./cardLibs";
+import { addCardElement, createCardElement, removeCardElementByAdder } from "./cardLibs";
+import { type CardElement, CardElementTypes } from "./cardLibs";
 
 // 将元素添加到 CardInstance 组件上
 class AddCardElementToCard extends LGraphNode {
@@ -27,15 +26,17 @@ class AddCardElementToCard extends LGraphNode {
 
     cardInstance: InstanceType<typeof CardInstance> | null = null; // 卡片实例
     cardElement: CardElement; // 卡片元素
-    oldCardLink: string | null = null; // 上一个 cardLink 属性值
     needGetCardInstance = true; // 是否需要获取 app 属性值
+    widgets: IWidget[] = []; // 添加 widgets 属性
+    hasExternalContent = false; // 是否使用外部内容
 
-
+    size: [number, number] = [800, 800]; // 节点大小
 
     constructor() {
         super(AddCardElementToCard.title);
         this.addInput("Card Instance", "CardInstance"); // 添加输入
-        this.size = [400, 800]; // 设置节点大小
+        this.addInput("Content", "string"); // 添加内容输入
+        this.addOutput("Card Instance", "CardInstance"); // 添加输出
 
         this.cardElement = { // 初始化卡片元素
             uid: "",
@@ -52,49 +53,103 @@ class AddCardElementToCard extends LGraphNode {
             content: "Hello World",
         };
 
-        // this.addReactiveWidget("content", "Hello World"); // 添加文本内容输入框
-        // this.addReactiveWidget("type", "text"); // 添加类型输入框
-        // this.addReactiveWidget("style_count", 1); // 添加样式数量输入框
+        // 保存当前节点宽度
+        const currentWidth = this.size[0];
 
-        
-        // this.addReactiveWidget("style", `
-        // {
-        //     "width": "100px",
-        //     "height": "100px",
-        //     "backgroundColor": "#ffffff",
-        //     "color": "#FFFFFF",
-        //     "fontSize": "16px",
-        //     "textAlign": "center",
-        //     "lineHeight": "100px"
-        // }`); // 添加样式输入框
-
-        //this.addWidget("text","Surname","", { property: "surname"}); //this will modify the node.properties
-        this.addWidget("text", "content", "Hello World", (v) => { this.cardElement.content = v; this.reAdd(); },{property: "content"}); // 添加文本内容输入框
-        this.addWidget("text", "type", "text", (v) => { this.cardElement.type = v; this.reAdd(); },{property: "type"}); // 添加类型输入框
-
-        this.reAdd(); // 重新添加卡片元素
-    }
-    reAddStyleWidget(style: string): void {
-        // 删除多余的样式输入框
-        const styleCount = Object.keys(this.properties.style).length; // 获取样式数量
-        for (let i = 0; i < styleCount; i++) {
-        }
-        // 对于当前样式的每个属性，添加一个输入框。并且最后添加一个新的空白的样式输入框。
-        const addStyleWidget= (style:string) => {
-            // 获取样式的名称
-            const styleName = style.split(":")[0].trim(); // 获取样式名称
-            this.addWidget("text", styleName, style, (v) => { (this.properties.style as any)[styleName] = v; this.reAdd(); }); // 添加样式输入框
-        }
-
-        // 将样式字符串转换为对象
-        const styleObj = JSON.parse(style); // 将样式字符串转换为对象
-        // 遍历样式对象的每个属性
-        for (const key in styleObj) {
-            if (styleObj.hasOwnProperty(key)) {
-                const singleStyle = `${key}: ${styleObj[key]}`; // 获取单个样式
-                addStyleWidget(singleStyle); // 添加样式输入框
+        this.addWidget("text", "content", "Hello World", (v) => { 
+            if (!this.hasExternalContent) {
+                this.cardElement.content = v;
+                this.reAdd();
             }
+        },{property: "content"}); // 添加文本内容输入框
+        // this.addWidget("text", "type", "text", (v) => { this.cardElement.type = v; this.reAdd(); },{property: "type"}); // 添加类型输入框
+        this.addWidget("combo", "type", CardElementTypes[0], (v) => { this.cardElement.type = v; this.reAdd(); },{property: "type",values:CardElementTypes}); // 添加类型输入框
+
+        // 添加新增样式的输入框
+        this.addWidget(
+            "text",
+            "add_style",
+            "添加新样式 (格式: 属性名:属性值)",
+            (v: string) => {
+                const [newKey, newValue] = v.split(":").map((s: string) => s.trim());
+                if (newKey && newValue) {
+                    // 添加新的样式属性
+                    (this.properties.style as any)[newKey] = newValue;
+                    // 清空输入框
+                    const addStyleWidget = this.widgets.find(w => w.name === "add_style");
+                    if (addStyleWidget) {
+                        addStyleWidget.value = "添加新样式 (格式: 属性名:属性值)";
+                    }
+                    // 重新初始化样式输入框
+                    this.initStyleWidgets();
+                    // 重新添加卡片元素
+                    this.reAdd();
+                }
+            },
+            { property: "add_style" }
+        );
+
+        // 恢复节点宽度
+        this.size[0] = currentWidth;
+
+        // 初始化样式输入框
+        this.initStyleWidgets();
+    }
+
+    // 初始化样式输入框
+    initStyleWidgets(): void {
+        // 保存当前节点宽度
+        const currentWidth = this.size[0];
+        
+        // 清除现有的样式输入框，但保留 content、type 和 add_style 输入框
+        this.widgets = this.widgets.filter((w: IWidget) => {
+            if (!w.name) return true;
+            // 保留非样式相关的输入框
+            if (w.name === "content" || w.name === "type" || w.name === "add_style") return true;
+            // 清除样式相关的输入框
+            return !w.name.startsWith("style_");
+        });
+        
+        // 为每个样式属性创建输入框
+        // debug
+        console.log("initStyleWidgets", this.properties.style);
+        for (const [key, value] of Object.entries(this.properties.style)) {
+            this.addWidget(
+                "text",
+                `style_${key}`,
+                `${key}:${value}`,
+                (v: string) => {
+                    // 如果为空，则将该样式从 properties.style 中删除，并且移除该样式输入框，且重新添加卡片元素
+                    if (v === "") {
+                        delete (this.properties.style as any)[key];
+                        this.widgets = this.widgets.filter((w: IWidget) => w.name !== `style_${key}`);
+                        this.reAdd();
+                        return;
+                    }
+                    const [newKey, newValue] = v.split(":").map((s: string) => s.trim());
+                    if (newKey && newValue) {
+                        (this.properties.style as any)[newKey] = newValue;
+                        this.reAdd();
+                    }
+                },
+                { property: `style_${key}` }
+            );
         }
+
+        // 恢复节点宽度
+        this.size[0] = currentWidth;
+    }
+
+    onConfigure(o: SerializedLGraphNode): void {
+        if (super.onConfigure) {
+            super.onConfigure(o);
+        }
+        // 恢复保存的样式属性
+        if (o.properties && o.properties.style) {
+            this.properties.style = o.properties.style;
+        }
+        // 重新初始化样式输入框
+        this.initStyleWidgets();
     }
 
     reAdd(): void {
@@ -128,6 +183,8 @@ class AddCardElementToCard extends LGraphNode {
             console.log("断开连接", type, slotIndex, isConnected, link, ioSlot);
             this.remove(); // 移除卡片元素
             this.cardInstance = null; // 清空 app
+            // 设置输出数据
+            this.setOutputData(0, null);
         }
 
         // 如果是连接，则获取 app
@@ -136,10 +193,36 @@ class AddCardElementToCard extends LGraphNode {
             console.log("连接成功", type, slotIndex, isConnected, link, ioSlot);
             this.cardInstance = this.getInputData(0); // 获取输入数据
             if (this.cardInstance) {
+                // 设置输出数据
+                this.setOutputData(0, this.cardInstance);
                 this.needGetCardInstance = false; // 设置标志位为 false
                 this.reAdd(); // 重新添加卡片元素
                 //debug
                 console.log("add card element to card", this.cardInstance, this.cardElement);
+            }
+        }
+
+        // 如果是连接，且为输出，那么设置输出数据
+        if (type === LiteGraph.OUTPUT && isConnected && ioSlot.type === "CardInstance" && ioSlot.name === "Card Instance") {
+            //debug
+            console.log("连接成功", type, slotIndex, isConnected, link, ioSlot);
+            this.cardInstance = this.getInputData(0); // 获取输入数据
+            if (this.cardInstance) {
+                // 设置输出数据
+                this.setOutputData(0, this.cardInstance);
+            }
+        }
+
+        // 处理内容输入连接
+        if (type === LiteGraph.INPUT && ioSlot.name === "Content") {
+            this.hasExternalContent = isConnected;
+            if (isConnected) {
+                const content = this.getInputData(1);
+                if (content !== undefined) {
+                    this.properties.content = content;
+                    this.cardElement.content = content;
+                    this.reAdd();
+                }
             }
         }
     }
@@ -148,10 +231,22 @@ class AddCardElementToCard extends LGraphNode {
         if (this.needGetCardInstance) {
             this.cardInstance = this.getInputData(0); // 获取输入数据
             if (this.cardInstance) {
+                // 设置输出数据
+                this.setOutputData(0, this.cardInstance);
                 this.needGetCardInstance = false; // 设置标志位为 false
                 this.reAdd(); // 重新添加卡片元素
                 //debug
                 console.log("add card element to card", this.cardInstance, this.cardElement);
+            }
+        }
+
+        // 检查外部内容输入
+        if (this.hasExternalContent) {
+            const content = this.getInputData(1);
+            if (content !== undefined && content !== this.properties.content) {
+                this.properties.content = content;
+                this.cardElement.content = content;
+                this.reAdd();
             }
         }
     }

@@ -29,8 +29,8 @@ export async function saveFile(fileName: string, fileContent: string) {
 }
 
 // 加载图片/保存图片
-export async function loadImage() {
-    const res = await fetch("/api/image/test.png");
+export async function loadImage(imgPath: string = "test.png") {
+    const res = await fetch("/api/image/" + imgPath);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 

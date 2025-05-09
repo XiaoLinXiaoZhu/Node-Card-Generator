@@ -15,6 +15,17 @@ export interface CardEffect {
     value: string;
 }
 
+export enum CardElementType {
+    Text = "text",
+    Image = "image",
+    Html = "html",
+}
+export const CardElementTypes = [
+    CardElementType.Text,
+    CardElementType.Image,
+    CardElementType.Html,
+] as const;
+
 
 // const cardElementUidMap: Record<string, CardElement> = {}; // 用于存储 uid 和 cardElement 的映射关系
 // const adderUidMap: Record<string, Object> = {}; // 用于存储 adder 和 cardElement 的映射关系

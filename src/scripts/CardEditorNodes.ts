@@ -23,3 +23,5 @@ import "./nodes/FormatString";
 import "./nodes/CreateCardInstance";
 import "./nodes/DisplayCardInstance";
 import "./nodes/AddElementToCard";
+import "./nodes/TextFormatter";
+import "./nodes/PreviewHtml";

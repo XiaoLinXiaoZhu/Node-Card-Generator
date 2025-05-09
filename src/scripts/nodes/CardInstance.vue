@@ -3,8 +3,9 @@
     <!-- HTML 渲染部分 -->
     <div ref="htmlCard" class="card" :style="cardStyle">
       <DragableElement v-for="(el, index) in elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
-        {{ el.content }}
         <img v-if="el.type === 'image'" :src="el.src">
+        <div v-if="el.type === 'html'" v-html="el.content"></div>
+        <div v-if="el.type === 'text'" :style="el.style">{{ el.content }}</div>
       </DragableElement>
     </div>
 
@@ -19,7 +20,7 @@ import { ref, onMounted, watchEffect, computed, watch } from 'vue';
 import { toPng } from 'html-to-image';
 import { applyEffect } from '../afterEffect/imageEffects.ts';
 import DragableElement from '../../components/DragableElement.vue';
-import { type CardElement, type CardEffect, loadImageFromLink } from './cardLibs.js';
+import { type CardElement, type CardEffect, loadImageFromLink } from './cardLibs.ts';
 
 const props = defineProps({
   elements: {
