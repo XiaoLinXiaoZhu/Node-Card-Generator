@@ -92,9 +92,23 @@ class TextFormatter extends LGraphNode {
             const currentWidth = this.size[0];
             
             this.properties.rules.push({
-                type: "new",
+                type: "default",
                 pattern: "",
-                style: {},
+                style: {
+                    color: "",
+                    backgroundColor: "",
+                    fontWeight: "",
+                    icon: "",
+                    borderRadius: "",
+                    padding: "",
+                    margin: "",
+                    fontSize: "",
+                    textAlign: "",
+                    display: "",
+                    width: "",
+                    height: "",
+                    verticalAlign: ""
+                },
                 priority: this.properties.rules.length + 1
             });
             this.updateRuleWidgets();
@@ -197,6 +211,7 @@ class TextFormatter extends LGraphNode {
 
         // 应用规则
         sortedRules.forEach(rule => {
+            if (!rule.pattern) return; // 如果没有模式，则跳过
             const regex = new RegExp(rule.pattern, "g");
             formattedText = formattedText.replace(regex, (match: string) => {
                 // 构建内联样式

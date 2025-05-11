@@ -2,12 +2,37 @@
   <div class="card-container" ref="cardContainer">
     <!-- HTML 渲染部分 -->
     <div ref="htmlCard" class="card" :style="cardStyle">
-      <DragableElement v-for="(el, index) in _elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
-        <img v-if="el.type === 'image'" :src="el.src"/>
+      <div v-for="(el, index) in _elements" style="height: 100%;width: 100%;position: absolute;top: 0;left: 0;">
+        <DragableElement v-if="el.type === 'image'" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
+          <img :src="el.src" :style="el.style" @load="renderCard" />
+        </DragableElement>
+        <DragableElement v-if="el.type === 'html'" :key="index" v-html="el.content" :class="el.type" :style="el.style"
+          @moved="renderCard">
+        </DragableElement>
+        <DragableElement v-if="el.type === 'text'" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
+          {{ el.content }}
+        </DragableElement>
+      </div>
+
+
+      <!-- <DragableElement v-for="(el, index) in _elements" :key="index" :class="el.type" :style="el.style"
+        @moved="renderCard">
+        <img v-if="el.type === 'image'" :src="el.src" :style="el.style" @load="renderCard" />
         <div v-if="el.type === 'html'" v-html="el.content"></div>
-        <div v-if="el.type === 'text'" :style="el.style">{{ el.content }}</div>
-      </DragableElement>
+        <div v-if="el.type === 'text'">{{ el.content }}</div>
+      </DragableElement> -->
     </div>
+
+    <!-- <div ref="htmlCard" class="card" :style="cardStyle" v-for="(el, index) in _elements" :key="index">
+      <DragableElement v-if="el.type === 'image'" :class="el.type" :style="el.style" @moved="renderCard">
+        <img :src="el.src" :style="el.style" @load="renderCard" />
+      </DragableElement>
+      <DragableElement v-html="el.content" v-if="el.type === 'html'" :class="el.type" :style="el.style" @moved="renderCard">
+      </DragableElement>
+      <DragableElement v-if="el.type === 'text'" :class="el.type" :style="el.style" @moved="renderCard">
+        {{ el.content }}
+      </DragableElement>
+    </div> -->
 
     <!-- Canvas 后处理层 -->
     <canvas ref="canvas" :width="_width" :height="_height"></canvas>
@@ -16,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, computed, watch ,nextTick} from 'vue';
+import { ref, onMounted, watchEffect, computed, watch, nextTick } from 'vue';
 import { toPng } from 'html-to-image';
 import { applyEffect } from '../afterEffect/imageEffects.ts';
 import DragableElement from '../../components/DragableElement.vue';
@@ -58,7 +83,7 @@ const cardLink = ref("");
 
 const cardStyle = computed(() => {
   const blur = _effects.value.find(e => e.name === 'blur')?.value || '0';
-  return { 
+  return {
     filter: `blur(${blur})`,
     width: `${_width.value}px`,
     height: `${_height.value}px`
@@ -70,7 +95,7 @@ let latestRenderId = 0;
 async function renderCard() {
   const currentRenderId = ++latestRenderId;
   const startTime = Date.now();
-  console.log("Rendering card with ID:", currentRenderId,new Error());
+  console.log("Rendering card with ID:", currentRenderId, new Error());
 
   if (!htmlCard.value) {
     throw new Error("htmlCard is not initialized");
@@ -141,7 +166,7 @@ watch(
   () => [_elements.value, _effects.value, _width.value, _height.value],
   async () => {
     try {
-      
+
       await renderCard();
     } catch (error) {
       console.error("Error re-rendering card:", error);
@@ -198,7 +223,7 @@ defineExpose({
   getCardLink: () => cardLink.value,
   getCanvas: () => canvas.value,
   elements: _elements,
-  setElements: (e:CardElement[]) => {
+  setElements: (e: CardElement[]) => {
     _elements.value = e;
   },
   effects: _effects,

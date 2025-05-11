@@ -113,7 +113,7 @@ class PreviewHtml extends ExLGraphNode {
             const content = this.getInputData(0);
             if (content !== undefined && this.previewComponent) {
                 this.previewComponent.setHtmlContent(content);
-                this.needGetHtmlContent = false;
+                // this.needGetHtmlContent = false;
             }
         }
 
