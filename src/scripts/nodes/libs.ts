@@ -29,11 +29,20 @@ export async function saveFile(fileName: string, fileContent: string) {
 }
 
 // 加载图片/保存图片
+// 一个列表缓存
+const imageCache: { [key: string]: string } = {};
+const maxCacheSize = 20; // 最大缓存数量
 export async function loadImage(imgPath: string = "test.png") {
     const res = await fetch("/api/image/" + imgPath);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
-
+    imageCache[imgPath] = url;
+    // 如果缓存超过最大数量，则删除最早加载的图片
+    if (Object.keys(imageCache).length > maxCacheSize) {
+        const oldestKey = Object.keys(imageCache)[0];
+        URL.revokeObjectURL(imageCache[oldestKey]); // 释放内存
+        delete imageCache[oldestKey]; // 删除缓存
+    }
     return url;
 }
 

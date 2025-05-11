@@ -2,11 +2,12 @@ import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot
 import CardInstance from "./CardInstance.vue";
 import {createApp} from "vue";
 import { drawCardCanvasOnNode, drawCardLinkOnNode, loadImageFromLink } from "./cardLibs";
+import { ExLGraphNode } from "./ExLGraphNode";
 
 // 这个节点能够创建一个卡片元素，定义它的 长宽。
 // 卡片元素本质上是一个 VUE 组件，里面包括 使用 HTML 作为渲染的部分，也包括使用 Canvas 作为添加特效的部分。
 
-class CreateCardInstance extends LGraphNode {
+class CreateCardInstance extends ExLGraphNode {
     static title = "Create Card Instance";
     static desc = "Create a card instance with given width and height";
     static pixels_threshold = 10;
@@ -15,23 +16,27 @@ class CreateCardInstance extends LGraphNode {
     widthWidget?: IWidget; // 定义 widget 属性
     heightWidget?: IWidget; // 定义 widget 属性
     static defaultCanvasSize = [300, 400]; // 定义默认画布大小
-    static defaultSize = [240, 400]; // 定义默认大小
-    properties = {
+    static defaultNodeSize = [240, 400]; // 定义默认大小
+    properties:{
+        width: number;
+        height: number;
+    } = {
         width: CreateCardInstance.defaultCanvasSize[0], // 定义默认宽度
         height: CreateCardInstance.defaultCanvasSize[1], // 定义默认高度
-    }; // 定义属性
+    }; // 定义默认属性值
 
     cardInstance: InstanceType<typeof CardInstance> | null = null; // 定义卡片实例
     
 
     constructor() {
         super(CreateCardInstance.title);
-        this.widthWidget = this.addWidget("number", "Width", CreateCardInstance.defaultCanvasSize[0], this.onWidthChange.bind(this)); // 添加宽度输入框
-        this.heightWidget = this.addWidget("number", "Height", CreateCardInstance.defaultCanvasSize[1], this.onHeightChange.bind(this)); // 添加高度输入框
-        this.addProperty("width", CreateCardInstance.defaultCanvasSize[0], "number"); // 添加宽度属性
-        this.addProperty("height", CreateCardInstance.defaultCanvasSize[1], "number"); // 添加高度属性
+        this.widthWidget = this.addBindedWidget("number", "width", CreateCardInstance.defaultCanvasSize[0], this.onWidthChange.bind(this)); // 添加宽度输入框
+        this.heightWidget = this.addBindedWidget("number", "height", CreateCardInstance.defaultCanvasSize[1], this.onHeightChange.bind(this)); // 添加高度输入框
+
         this.addOutput("CardInstance", "CardInstance"); // 添加输出
-        this.size = [CreateCardInstance.defaultSize[0], CreateCardInstance.defaultSize[1]]; // 设置节点大小
+
+        this.size = [CreateCardInstance.defaultNodeSize[0], CreateCardInstance.defaultNodeSize[1]]; // 设置节点大小
+
 
         // 创建一个 隐藏的 div 元素，用于渲染 VUE 组件
         const div = document.createElement("div");
@@ -44,7 +49,9 @@ class CreateCardInstance extends LGraphNode {
             width: this.properties.width,
             height: this.properties.height,
         });
+
         app.provide("app", app); // 提供 app 实例
+        
         const cardInstance = app.mount(div); // 挂载 VUE 组件到 div 上
         this.cardInstance = cardInstance as InstanceType<typeof CardInstance>; // 设置卡片实例
 
@@ -53,17 +60,6 @@ class CreateCardInstance extends LGraphNode {
     }
 
     onConfigure(o: SerializedLGraphNode): void {
-        //如果没有设置属性值，则设置为默认值
-        if (!o.properties.width) {
-            o.properties.width = CreateCardInstance.defaultCanvasSize[0]; // 初始化宽度属性值
-        }
-        if (!o.properties.height) {
-            o.properties.height = CreateCardInstance.defaultCanvasSize[1]; // 初始化高度属性值
-        }
-
-        this.widthWidget!.value = o.properties.width; // 更新宽度 widget 的值
-        this.heightWidget!.value = o.properties.height; // 更新高度 widget 的值
-
         if (!this.cardInstance) return;
         this.cardInstance.width = o.properties.width; // 更新 VUE 组件的宽度
         this.cardInstance.height = o.properties.height; // 更新 VUE 组件的高度
@@ -90,18 +86,12 @@ class CreateCardInstance extends LGraphNode {
     }
 
     onWidthChange(value: number) {
-        this.properties.width = value; // 更新宽度属性值
-        // this.widthWidget!.value = value; // 更新 widget 的值
-
         if (this.cardInstance) {
             this.cardInstance.setWidth(value); // 更新 VUE 组件的宽度
         }
     }
 
     onHeightChange(value: number) {
-        this.properties.height = value; // 更新高度属性值
-        // this.heightWidget!.value = value; // 更新 widget 的值
-
         if (this.cardInstance) {
             this.cardInstance.setHeight(value); // 更新 VUE 组件的高度
         }
@@ -112,6 +102,17 @@ class CreateCardInstance extends LGraphNode {
     }
 
     onExecute() {
+    }
+
+    onRemoved(): void {
+        if (this.cardInstance) {
+            this.cardInstance.destroy(); // 销毁 VUE 组件实例
+            this.cardInstance = null; // 清空卡片实例
+        }
+        const div = document.getElementById("card-instance"); // 获取 div 元素
+        if (div) {
+            document.body.removeChild(div); // 移除 div 元素
+        }
     }
 }
 

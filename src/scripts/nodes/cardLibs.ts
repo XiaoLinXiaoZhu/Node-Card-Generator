@@ -1,4 +1,5 @@
 import CardInstance from "./CardInstance.vue";
+import { loadImage } from "./libs";
 import { UidManager } from "./uidGenerator";
 export interface CardElement {
     uid: string;
@@ -86,6 +87,17 @@ export function addCardElement(card: InstanceType<typeof CardInstance>, element:
         console.log("删除之前的元素", element.adder, elements); // 删除之前的元素
     }
 
+    // 如果 element 的类型为 "image"，则需要加载图片
+    if (element.type === CardElementType.Image && !element.src) {
+        // debug
+        console.log("添加图片元素", element, element.content);
+        loadImage(element.content).then((img) => {
+            element.src = img; // 将图片的 src 设置为 img 的 src
+            addCardElement(card, element); // 递归调用 addCardElement
+        });
+        return card; // 返回 card
+    }
+
     elements.push(element);
 
     card.setElements(elements); // 更新元素列表
@@ -115,7 +127,7 @@ export function removeCardElementByAdder(card: InstanceType<typeof CardInstance>
     const deletedElements: CardElement[] = []; // 用于存储删除的元素
     elements.forEach((e) => {
         //debug
-        console.log("比较元素", e, e.adder, adder, "\ntypeof adder",  typeof e.adder,typeof adder,"\n", e.adder === adder);
+        // console.log("比较元素", e, e.adder, adder, "\ntypeof adder",  typeof e.adder,typeof adder,"\n", e.adder === adder);
         if (e.adder == adder) {
             deletedElements.push(e); // 找到要删除的元素
         }

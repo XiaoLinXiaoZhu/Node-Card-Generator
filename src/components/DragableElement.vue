@@ -29,8 +29,12 @@ onMounted(() => {
     dragableElement.value.style.cursor = 'move';
     dragableElement.value.style.userSelect = 'none'; // Prevent text selection during drag
 
-    style.value.left = `${dragableElement.value.offsetLeft}px`;
-    style.value.top = `${dragableElement.value.offsetTop}px`;
+    if (dragableElement.value.style.getPropertyValue('left') === '' && dragableElement.value.style.getPropertyValue('right') === '') {
+        dragableElement.value.style.left = '0px';
+    }
+    if (dragableElement.value.style.getPropertyValue('top') === '' && dragableElement.value.style.getPropertyValue('bottom') === '') {
+        dragableElement.value.style.top = '0px';
+    }
 
     dragableElement.value.addEventListener('mousedown', onMouseDown);
 
@@ -58,8 +62,19 @@ const onMouseDown = (event: MouseEvent) => {
     const onMouseMove = (event: MouseEvent) => {
         newLeft = event.clientX - offsetX;
         newTop = event.clientY - offsetY;
-        style.value.left = `${newLeft}px`;
-        style.value.top = `${newTop}px`;
+        if (!dragableElement.value) return;
+        // 如果 设置了 right ，则这里不需要设置 left 属性
+        if (!dragableElement.value.style.getPropertyValue('right')) {
+            style.value.left = `${newLeft}px`;
+        }else{
+            style.value.left = '';
+        }
+        // 如果 设置了 bottom ，则这里不需要设置 top 属性
+        if (!dragableElement.value.style.getPropertyValue('bottom')) {
+            style.value.top = `${newTop}px`;
+        }else{
+            style.value.top = '';
+        }
     };
 
     const onMouseUp = () => {

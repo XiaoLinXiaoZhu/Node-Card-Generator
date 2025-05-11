@@ -1,22 +1,22 @@
 <template>
-  <div class="card-container">
+  <div class="card-container" ref="cardContainer">
     <!-- HTML 渲染部分 -->
     <div ref="htmlCard" class="card" :style="cardStyle">
-      <DragableElement v-for="(el, index) in elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
-        <img v-if="el.type === 'image'" :src="el.src">
+      <DragableElement v-for="(el, index) in _elements" :key="index" :class="el.type" :style="el.style" @moved="renderCard">
+        <img v-if="el.type === 'image'" :src="el.src"/>
         <div v-if="el.type === 'html'" v-html="el.content"></div>
         <div v-if="el.type === 'text'" :style="el.style">{{ el.content }}</div>
       </DragableElement>
     </div>
 
     <!-- Canvas 后处理层 -->
-    <canvas ref="canvas" :width="width" :height="height"></canvas>
+    <canvas ref="canvas" :width="_width" :height="_height"></canvas>
   </div>
   <button @click="exportPNG" class="export-btn">导出PNG</button>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, computed, watch } from 'vue';
+import { ref, onMounted, watchEffect, computed, watch ,nextTick} from 'vue';
 import { toPng } from 'html-to-image';
 import { applyEffect } from '../afterEffect/imageEffects.ts';
 import DragableElement from '../../components/DragableElement.vue';
@@ -44,34 +44,41 @@ const props = defineProps({
 const emit = defineEmits(['rerender']);
 
 // 将 props 初始化到 ref 中
-const elements = ref<CardElement[]>([...props.elements]);
-const effects = ref<CardEffect[]>([...props.effects]);
-const width = ref<number>(props.width);
-const height = ref<number>(props.height);
+const _elements = ref<CardElement[]>([...props.elements]);
+const _effects = ref<CardEffect[]>([...props.effects]);
+const _width = ref<number>(props.width);
+const _height = ref<number>(props.height);
 
+const cardContainer = ref<HTMLElement | null>(null);
 const htmlCard = ref<HTMLElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
+
 
 const cardLink = ref("");
 
 const cardStyle = computed(() => {
-  const blur = effects.value.find(e => e.name === 'blur')?.value || '0';
+  const blur = _effects.value.find(e => e.name === 'blur')?.value || '0';
   return { 
     filter: `blur(${blur})`,
-    width: `${width.value}px`,
-    height: `${height.value}px`
+    width: `${_width.value}px`,
+    height: `${_height.value}px`
   };
 });
 
 let latestRenderId = 0;
+
 async function renderCard() {
   const currentRenderId = ++latestRenderId;
   const startTime = Date.now();
-  console.log("Rendering card with ID:", currentRenderId);
+  console.log("Rendering card with ID:", currentRenderId,new Error());
 
   if (!htmlCard.value) {
     throw new Error("htmlCard is not initialized");
   }
+  // 调整 htmlCard 的大小
+  htmlCard.value.style.width = `${_width.value}px`;
+  htmlCard.value.style.height = `${_height.value}px`;
+
   const htmlPNG = await toPng(htmlCard.value as HTMLElement);
 
   if (!htmlPNG) {
@@ -89,10 +96,14 @@ async function renderCard() {
   }
 
   const img = await loadImageFromLink(htmlPNG);
-  ctx.clearRect(0, 0, width.value, height.value);
+  if (currentRenderId < latestRenderId) {
+    console.log("Render cancelled, ID mismatch:", currentRenderId, latestRenderId);
+    return;
+  }
+  ctx.clearRect(0, 0, _width.value, _height.value);
   ctx.drawImage(img, 0, 0);
 
-  for (const effect of effects.value) {
+  for (const effect of _effects.value) {
     await applyEffect(ctx, effect);
   }
 
@@ -116,8 +127,8 @@ async function renderCard() {
     `Card rendered in: ${endTime - startTime} ms, 
     ID: ${currentRenderId}, 
     Link: ${cardLink.value}
-    Elements: ${elements.value.length},
-    Effects: ${effects.value.length},
+    Elements: ${_elements.value.length},
+    Effects: ${_effects.value.length},
     `
   )
 
@@ -127,9 +138,10 @@ async function renderCard() {
 }
 
 watch(
-  () => [elements.value, effects.value, width.value, height.value],
+  () => [_elements.value, _effects.value, _width.value, _height.value],
   async () => {
     try {
+      
       await renderCard();
     } catch (error) {
       console.error("Error re-rendering card:", error);
@@ -154,7 +166,26 @@ async function exportPNG() {
   link.click();
 }
 
-onMounted(() => {
+function destroy() {
+  if (canvas.value) {
+    const ctx = canvas.value.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, _width.value, _height.value);
+    }
+  }
+  URL.revokeObjectURL(cardLink.value);
+
+  // 直接将自己删除
+  const parent = cardContainer.value?.parentNode;
+  if (parent) {
+    parent.removeChild(cardContainer.value as Node);
+  } else {
+    console.error("Parent node not found for cardContainer");
+  }
+}
+
+onMounted(async () => {
+  await nextTick();
   renderCard().catch(error => {
     console.error("Error during initial render:", error);
   });
@@ -166,15 +197,16 @@ defineExpose({
   cardLink,
   getCardLink: () => cardLink.value,
   getCanvas: () => canvas.value,
-  elements,
+  elements: _elements,
   setElements: (e:CardElement[]) => {
-    elements.value = e;
+    _elements.value = e;
   },
-  effects,
-  width,
-  setWidth: (w: number) => width.value = w,
-  height,
-  setHeight: (h: number) => height.value = h,
+  effects: _effects,
+  width: _width,
+  setWidth: (w: number) => _width.value = w,
+  height: _height,
+  setHeight: (h: number) => _height.value = h,
+  destroy,
 });
 
 </script>

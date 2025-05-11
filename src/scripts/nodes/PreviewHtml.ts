@@ -3,8 +3,9 @@ import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot
 import { drawCardCanvasOnNode } from "./cardLibs";
 import PreviewHtmlComponent from "./PreviewHtmlComponent.vue";
 import { createApp } from "vue";
+import { ExLGraphNode } from "./ExLGraphNode";
 
-class PreviewHtml extends LGraphNode {
+class PreviewHtml extends ExLGraphNode {
     static title = "Preview HTML";
     static desc = "Display HTML content on node";
     static pixels_threshold = 10;
@@ -29,12 +30,12 @@ class PreviewHtml extends LGraphNode {
         container.style.left = '-9999px';
         container.style.top = '-9999px';
         document.body.appendChild(container);
-        
+
         const app = createApp(PreviewHtmlComponent, {
             width: this.properties.width,
             height: this.properties.height
         });
-        
+
         this.previewComponent = app.mount(container) as InstanceType<typeof PreviewHtmlComponent>;
 
         // 添加宽度和高度输入框
@@ -51,6 +52,8 @@ class PreviewHtml extends LGraphNode {
                 this.previewComponent.setHeight(v);
             }
         });
+
+        this.initConnectionListeners();
     }
 
     onConfigure(o: SerializedLGraphNode): void {
@@ -66,31 +69,28 @@ class PreviewHtml extends LGraphNode {
         }
     }
 
-    onConnectionsChange(type: number, slotIndex: number, isConnected: boolean, link: LLink, ioSlot: (INodeInputSlot | INodeOutputSlot)): void {
-        // 处理 HTML 内容输入连接
-        // 如果 previewComponent 不存在，则报错
-        if (!this.previewComponent) {
-            console.error("PreviewHtml 组件未初始化");
-        }
-        if (type === LiteGraph.INPUT && ioSlot.name === "HTML内容" && isConnected) {
+    initConnectionListeners() {
+        this.onInputConnected(0, (v) => {
+            // debug
+            console.log("PreviewHtml 连接成功", v);
             const content = this.getInputData(0);
-            console.log("PreviewHtml 设置 HTML 内容", content);
             if (content !== undefined && this.previewComponent) {
                 this.previewComponent.setHtmlContent(content);
-            }else{
+            } else {
                 this.needGetHtmlContent = true;
             }
-        }
+        });
 
-        // 断开连接
-        if (type === LiteGraph.INPUT && ioSlot.name === "HTML内容" && !isConnected) {
-            //debug
+        this.onInputDisconnected(0, () => {
+            // debug
             console.log("PreviewHtml 断开连接");
             if (this.previewComponent) {
                 this.previewComponent.setHtmlContent("");
             }
-        }
+            this.needGetHtmlContent = false;
+        });
     }
+
 
     onDrawForeground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
         if (!this.previewComponent) return;
@@ -111,19 +111,12 @@ class PreviewHtml extends LGraphNode {
     onExecute(): void {
         if (this.needGetHtmlContent) {
             const content = this.getInputData(0);
-            //debug
-            console.log("PreviewHtml 获取 HTML 内容", content);
             if (content !== undefined && this.previewComponent) {
-                this.needGetHtmlContent = false;
                 this.previewComponent.setHtmlContent(content);
+                this.needGetHtmlContent = false;
             }
         }
 
-        const content = this.getInputData(0);
-        if (content !== undefined && this.previewComponent) {
-            this.needGetHtmlContent = false;
-            this.previewComponent.setHtmlContent(content);
-        }
     }
 
     onRemoved(): void {

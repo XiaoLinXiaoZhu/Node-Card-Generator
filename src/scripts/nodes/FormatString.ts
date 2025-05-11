@@ -54,7 +54,7 @@ class FormatString extends LGraphNode {
                 }
             });
         } else {
-            console.error("没有找到变量名！");
+            console.warn("没有找到变量名！");
         }
     }
 
