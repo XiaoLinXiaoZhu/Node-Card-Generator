@@ -88,15 +88,15 @@ export function addCardElement(card: InstanceType<typeof CardInstance>, element:
     }
 
     // 如果 element 的类型为 "image"，则需要加载图片
-    if (element.type === CardElementType.Image && !element.src) {
-        // debug
-        console.log("添加图片元素", element, element.content);
-        loadImage(element.content).then((img) => {
-            element.src = img; // 将图片的 src 设置为 img 的 src
-            addCardElement(card, element); // 递归调用 addCardElement
-        });
-        return card; // 返回 card
-    }
+    // if (element.type === CardElementType.Image && !element.src) {
+    //     // debug
+    //     console.log("添加图片元素", element, element.content);
+    //     loadImage(element.content).then((img) => {
+    //         element.src = img; // 将图片的 src 设置为 img 的 src
+    //         addCardElement(card, element); // 递归调用 addCardElement
+    //     });
+    //     return card; // 返回 card
+    // }
 
     elements.push(element);
 

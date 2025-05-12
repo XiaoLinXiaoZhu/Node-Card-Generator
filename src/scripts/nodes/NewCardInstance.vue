@@ -13,26 +13,7 @@
           {{ el.content }}
         </DragableElement>
       </div>
-
-
-      <!-- <DragableElement v-for="(el, index) in _elements" :key="index" :class="el.type" :style="el.style"
-        @moved="renderCard">
-        <img v-if="el.type === 'image'" :src="el.src" :style="el.style" @load="renderCard" />
-        <div v-if="el.type === 'html'" v-html="el.content"></div>
-        <div v-if="el.type === 'text'">{{ el.content }}</div>
-      </DragableElement> -->
     </div>
-
-    <!-- <div ref="htmlCard" class="card" :style="cardStyle" v-for="(el, index) in _elements" :key="index">
-      <DragableElement v-if="el.type === 'image'" :class="el.type" :style="el.style" @moved="renderCard">
-        <img :src="el.src" :style="el.style" @load="renderCard" />
-      </DragableElement>
-      <DragableElement v-html="el.content" v-if="el.type === 'html'" :class="el.type" :style="el.style" @moved="renderCard">
-      </DragableElement>
-      <DragableElement v-if="el.type === 'text'" :class="el.type" :style="el.style" @moved="renderCard">
-        {{ el.content }}
-      </DragableElement>
-    </div> -->
 
     <!-- Canvas 后处理层 -->
     <canvas ref="canvas" :width="_width" :height="_height"></canvas>
