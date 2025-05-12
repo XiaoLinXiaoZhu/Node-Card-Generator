@@ -10,10 +10,29 @@ export interface CardElement {
     src?: string;
 }
 
+/**
+ * 使用html提供的css来渲染特殊效果，比如
+ * 模糊： blur: 5px;
+ * 阴影： box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+ * 透明度： opacity: 0.5;
+ * 旋转： transform: rotate(45deg);
+ */
 export interface CardEffect {
     uid: string;
     name: string;
     value: string;
+}
+
+/**
+ * 通过基于像素的操作来渲染特殊效果，通过调用canvas的api来实现
+ * canvas.getContext("2d").filter = "blur(5px)";
+ * 或者自己实现的基于像素的操作
+ * function blur(ctx,args[])
+ */
+export interface PixelEffect {
+    uid: string;
+    fn: (ctx : CanvasRenderingContext2D, args: any[]) => void;
+    args: any[];
 }
 
 export enum CardElementType {
