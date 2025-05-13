@@ -1,4 +1,4 @@
-import { SketchPad, type SketchPadOptions } from "./SketchPad";
+import { SketchPad, type SketchPadOptions } from "../lib/SketchPad";
 
 // 这里是一个测试用的函数链
 const sketchPad = new SketchPad();
