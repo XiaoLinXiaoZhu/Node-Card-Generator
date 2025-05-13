@@ -1,5 +1,5 @@
 import { LGraphNode, LiteGraph } from "litegraph.js";
-import { clamp } from "./libs";
+import { clamp } from "../lib/libs";
 
 // 获取 数字 范围内的值
 class GetNumber extends LGraphNode {

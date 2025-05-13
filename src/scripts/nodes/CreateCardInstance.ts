@@ -1,7 +1,7 @@
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget,type SerializedLGraphNode } from "litegraph.js";
 import CardInstance from "./CardInstance.vue";
 import {createApp} from "vue";
-import { drawCardCanvasOnNode, drawCardLinkOnNode, loadImageFromLink } from "./cardLibs";
+import { drawCardCanvasOnNode, drawCardLinkOnNode, loadImageFromLink } from "../lib/cardLibs";
 import { ExLGraphNode } from "./ExLGraphNode";
 
 // 这个节点能够创建一个卡片元素，定义它的 长宽。

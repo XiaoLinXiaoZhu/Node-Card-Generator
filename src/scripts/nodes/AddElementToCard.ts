@@ -1,7 +1,7 @@
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget, type SerializedLGraphNode } from "litegraph.js";
 import CardInstance from "./CardInstance.vue";
-import { addCardElement, createCardElement, removeCardElementByAdder } from "./cardLibs";
-import { type CardElement, CardElementTypes } from "./cardLibs";
+import { addCardElement, createCardElement, removeCardElementByAdder } from "../lib/cardLibs";
+import { type CardElement, CardElementTypes } from "../lib/cardLibs";
 import { ExLGraphNode } from "./ExLGraphNode";
 
 // 将元素添加到 CardInstance 组件上

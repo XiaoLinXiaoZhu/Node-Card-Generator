@@ -1,5 +1,5 @@
 import { LGraph, LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget, type SerializedLGraphNode } from "litegraph.js";
-import { loadImageFromLink,drawCardLinkOnNode, drawCardCanvasOnNode } from "./cardLibs";
+import { loadImageFromLink,drawCardLinkOnNode, drawCardCanvasOnNode } from "../lib/cardLibs";
 import CardInstance from "./CardInstance.vue";
 
 // 这个节点能够 将传入的 CardInstance 组件渲染到节点上。

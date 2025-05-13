@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import { toPng } from 'html-to-image';
-import { loadImage } from './libs';
+import { loadImage } from '../lib/libs';
 
 const props = defineProps({
   htmlContent: {

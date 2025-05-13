@@ -26,8 +26,8 @@ import { ref, onMounted, watchEffect, computed, watch, nextTick } from 'vue';
 import { toPng } from 'html-to-image';
 import { applyEffect } from '../afterEffect/imageEffects.ts';
 import DragableElement from '../../components/DragableElement.vue';
-import { type CardElement, type CardEffect, loadImageFromLink } from './cardLibs.ts';
-import { loadImage } from './libs.ts';
+import { type CardElement, type CardEffect, loadImageFromLink } from '../lib/cardLibs.ts';
+import { loadImage } from '../lib/libs.ts';
 const props = defineProps({
   elements: {
     type: Array as () => CardElement[],

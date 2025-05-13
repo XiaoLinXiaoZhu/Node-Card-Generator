@@ -1,6 +1,6 @@
 // 用于预览html
 import { LGraphNode, LiteGraph, LLink, type INodeInputSlot, type INodeOutputSlot, type IWidget, type SerializedLGraphNode } from "litegraph.js";
-import { drawCardCanvasOnNode } from "./cardLibs";
+import { drawCardCanvasOnNode } from "../lib/cardLibs";
 import PreviewHtmlComponent from "./PreviewHtmlComponent.vue";
 import { createApp } from "vue";
 import { ExLGraphNode } from "./ExLGraphNode";

@@ -1,4 +1,4 @@
-import { CardElementType, type CardEffect, type CardElement, type PixelEffect } from "./cardLibs";
+import { CardElementType, type CardEffect, type CardElement, type PixelEffect } from "../lib/cardLibs";
 import { Tree,type TreeNode } from "./tree";
 
 type ElementTreeNodeData = CardElement | CardEffect | PixelEffect | "ADD";

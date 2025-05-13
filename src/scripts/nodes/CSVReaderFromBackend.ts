@@ -1,5 +1,5 @@
 import { LGraphNode, LiteGraph, type SerializedLGraphNode,type IWidget } from "litegraph.js";
-import {loadFile} from "./libs";
+import {loadFile} from "../lib/libs";
 // //name to show
 // MyAddNode.title = "Sum";
 // //function to call when the node is executed

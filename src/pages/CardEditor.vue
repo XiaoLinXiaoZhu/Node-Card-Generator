@@ -11,8 +11,8 @@
 <script setup lang="ts">
 import CardInstance from '../scripts/nodes/CardInstance.vue';
 import { ref, onMounted, watchEffect, computed, watch, useTemplateRef } from 'vue';
-import type { CardElement } from '../scripts/nodes/cardLibs';
-import { addCardElement } from '../scripts/nodes/cardLibs';
+import type { CardElement } from '../scripts/lib/cardLibs';
+import { addCardElement } from '../scripts/lib/cardLibs';
 
 const elements = ref<CardElement[]>([
     { uid: '123', content: "123", type: 'text', style: { color: 'red', fontSize: '20px' } },

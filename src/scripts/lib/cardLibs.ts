@@ -1,6 +1,6 @@
-import CardInstance from "./CardInstance.vue";
+import CardInstance from "../nodes/CardInstance.vue";
 import { loadImage } from "./libs";
-import { UidManager } from "./uidGenerator";
+import { UidManager } from "../nodes/uidGenerator";
 export interface CardElement {
     uid: string;
     adder?: string;
